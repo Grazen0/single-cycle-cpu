@@ -10,6 +10,6 @@ module simple_rom #(
   assign data = {mem[(addr+3)%SIZE], mem[(addr+2)%SIZE], mem[(addr+1)%SIZE], mem[addr%SIZE]};
 
   initial begin
-    $readmemh("data/asm/build/firmware.hex", mem);
+    $readmemh("data/firmware.hex", mem);
   end
 endmodule
