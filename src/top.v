@@ -1,8 +1,19 @@
-`timescale 1ns / 1ps
+module top (
+    input wire clk,
+    input wire rst_n,
 
-module cpu_tb ();
-  reg clk, rst_n;
-  always #5 clk = ~clk;
+    output wire clk_out,
+    output wire [7:0] lcd_data,
+    output wire [1:0] lcd_ctrl,
+    output wire lcd_enable
+);
+  clk_divider #(
+      .PERIOD(2)
+  ) divider (
+      .clk_in (clk),
+      .rst_n  (rst_n),
+      .clk_out(clk_out)
+  );
 
   wire [31:0] instr_data;
   wire [31:0] instr_addr;
@@ -16,18 +27,22 @@ module cpu_tb ();
   wire data_we;
 
   simple_ram ram (
-      .clk  (clk),
+      .clk  (clk_out),
       .rst_n(rst_n),
 
       .addr(data_addr),
       .write_data(data_wd),
       .write_enable(data_we),
 
-      .data(data_data)
+      .data(data_data),
+
+      .lcd_data  (lcd_data),
+      .lcd_ctrl  (lcd_ctrl),
+      .lcd_enable(lcd_enable)
   );
 
   cpu c (
-      .clk  (clk),
+      .clk  (clk_out),
       .rst_n(rst_n),
 
       .instr_addr(instr_addr),
@@ -38,25 +53,4 @@ module cpu_tb ();
       .data_write_enable(data_we),
       .data_data(data_data)
   );
-
-  integer i;
-
-  generate
-    genvar idx;
-    for (idx = 0; idx < 32; idx = idx + 1) begin : g_register
-      wire [31:0] val = cpu_tb.c.register_file.regs[idx];
-    end
-  endgenerate
-
-  initial begin
-    $dumpvars(0, cpu_tb);
-
-    clk   = 1;
-    rst_n = 1;
-
-    #1 rst_n = 0;
-    #1 rst_n = 1;
-
-    #300 $finish();
-  end
 endmodule
