@@ -32,11 +32,11 @@ module simple_ram #(
   assign data = {mem[(addr+3)%SIZE], mem[(addr+2)%SIZE], mem[(addr+1)%SIZE], mem[addr%SIZE]};
 
   initial begin
-    // $dumpvars(0, mem[7]);
-    // $dumpvars(0, mem[8]);
-    // $dumpvars(0, mem[9]);
-    // $dumpvars(0, mem[10]);
-    // $dumpvars(0, mem[11]);
-    // $dumpvars(0, mem[12]);
+    $dumpvars(0, mem[7]);
+    $dumpvars(0, mem[8]);
+    $dumpvars(0, mem[9]);
+    $dumpvars(0, mem[10]);
+    $dumpvars(0, mem[11]);
+    $dumpvars(0, mem[12]);
   end
 endmodule

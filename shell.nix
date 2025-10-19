@@ -2,7 +2,7 @@
   pkgs ? import <nixpkgs> { },
 }:
 let
-  riscvPackages = import <nixpkgs> {
+  riscvPkgs = import <nixpkgs> {
     crossSystem.config = "riscv32-unknown-none-elf";
   };
 in
@@ -13,7 +13,7 @@ pkgs.mkShell {
     xxd
 
     glibc_multi
-    riscvPackages.buildPackages.binutils
-    riscvPackages.buildPackages.gcc
+    riscvPkgs.buildPackages.binutils
+    riscvPkgs.buildPackages.gcc
   ];
 }

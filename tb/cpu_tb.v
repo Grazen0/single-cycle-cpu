@@ -2,20 +2,14 @@
 
 module cpu_tb ();
   reg clk, rst_n;
-  reg  [31:0] instr_data;
 
+  wire [31:0] instr_data;
   wire [31:0] instr_addr;
 
-  always @(*) begin
-    case (instr_addr)
-      // lw     x6, -4(x9)
-      0: instr_data = 32'hFFC4_A303;
-      // sw     x0, 8(x9)
-      4: instr_data = 32'h0004_A423;
-      // addi   x3, x3, 2
-      default: instr_data = {12'h02, 5'd3, 3'b000, 5'd3, 7'b0010011};
-    endcase
-  end
+  simple_rom rom (
+      .addr(instr_addr),
+      .data(instr_data)
+  );
 
   always #5 clk = ~clk;
 
