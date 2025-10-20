@@ -7,7 +7,7 @@ LCD_ENABLE = 8
 
 LCD_CLEAR = 0b00000001
 LCD_RETURN = 0b00000010
-LCD_SET = 0b00001111
+LCD_SET = 0b00001110
 
 _start:
     sw      zero, LCD_OPTS(zero) # write instruction

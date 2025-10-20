@@ -12,15 +12,31 @@ INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 IVERILOG_FLAGS := $(INC_FLAGS) 
 
-$(BUILD_DIR)/%: $(TB_DIR)/%.v $(SRCS)
-	mkdir -p $(dir $@)
-	iverilog $(IVERILOG_FLAGS) -o $@ $< $(SRCS) 
+DATA_DIR := ./data
+FIRMWARE_DIR := firmware
+
+FIRMWARE_HEX = firmware.hex
+
+.PHONY: clean run wave firmware
 
 all: $(TARGETS)
 
 clean:
+	make -C $(FIRMWARE_DIR) clean
 	rm -rf $(BUILD_DIR)
 	rm -f dump.vcd
+
+firmware:
+	make -C $(FIRMWARE_DIR)
+	cp $(FIRMWARE_DIR)/build/*.hex $(DATA_DIR)/$(FIRMWARE_HEX)
+
+$(DATA_DIR)/$(FIRMWARE_HEX):
+	make -C $(FIRMWARE_DIR)
+	cp $(FIRMWARE_DIR)/build/*.hex $@
+
+$(BUILD_DIR)/%: $(TB_DIR)/%.v $(SRCS) $(DATA_DIR)/$(FIRMWARE_HEX)
+	mkdir -p $(dir $@)
+	iverilog $(IVERILOG_FLAGS) -o $@ $< $(SRCS) 
 
 run: $(BUILD_DIR)/$(TB)
 	@if [ -z "$(TB)" ]; then \
@@ -36,5 +52,3 @@ wave: $(BUILD_DIR)/$(TB)
 	fi
 	vvp $<
 	gtkwave dump.vcd
-
-.PHONY: clean run wave

@@ -19,7 +19,13 @@ CC := riscv32-unknown-none-elf-gcc
 OBJCOPY := riscv32-unknown-none-elf-objcopy
 XXD := xxd
 
+.PHONY: all clean
+
 all: $(BUILD_DIR)/$(TARGET_HEX)
+
+clean:
+	rm -rf $(BUILD_DIR)
+
 
 $(BUILD_DIR)/$(TARGET_HEX): $(BUILD_DIR)/$(TARGET_BIN)
 	$(XXD) -p -c 1 $< > $@
@@ -37,8 +43,3 @@ $(BUILD_DIR)/%.c.o: %.c
 $(BUILD_DIR)/%.s.o: %.s
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
-
-clean:
-	rm -r $(BUILD_DIR)
-
-.PHONY: all clean
