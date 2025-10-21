@@ -1,7 +1,9 @@
 PROJECT_NAME := firmware
 TARGET_EXEC := $(PROJECT_NAME).elf
-TARGET_BIN := $(PROJECT_NAME).bin
-TARGET_HEX := $(PROJECT_NAME).hex
+TARGET_INSTR_BIN := $(PROJECT_NAME)_instr.bin
+TARGET_DATA_BIN := $(PROJECT_NAME)_data.bin
+TARGET_INSTR_HEX := $(PROJECT_NAME)_instr.hex
+TARGET_DATA_HEX := $(PROJECT_NAME)_data.hex
 
 BUILD_DIR := ./build
 SRC_DIRS := ./src
@@ -21,17 +23,19 @@ XXD := xxd
 
 .PHONY: all clean
 
-all: $(BUILD_DIR)/$(TARGET_HEX)
+all: $(BUILD_DIR)/$(TARGET_INSTR_HEX) $(BUILD_DIR)/$(TARGET_DATA_HEX)
 
 clean:
 	rm -rf $(BUILD_DIR)
 
-
-$(BUILD_DIR)/$(TARGET_HEX): $(BUILD_DIR)/$(TARGET_BIN)
+$(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.bin
 	$(XXD) -p -c 1 $< > $@
 
-$(BUILD_DIR)/$(TARGET_BIN): $(BUILD_DIR)/$(TARGET_EXEC)
-	$(OBJCOPY) -O binary $< $@
+$(BUILD_DIR)/$(TARGET_INSTR_BIN): $(BUILD_DIR)/$(TARGET_EXEC)
+	$(OBJCOPY) -O binary --only-section=.text --only-section=.rodata $< $@
+
+$(BUILD_DIR)/$(TARGET_DATA_BIN): $(BUILD_DIR)/$(TARGET_EXEC)
+	$(OBJCOPY) -O binary --only-section=.data --only-section=.bss $< $@
 
 $(BUILD_DIR)/$(TARGET_EXEC): $(OBJS) $(LINKER)
 	$(CC) $(CFLAGS) -T $(LINKER) -o $@ $(OBJS) $(LDFLAGS)

@@ -1,42 +1,35 @@
 `default_nettype none
 
 module simple_ram #(
-    parameter N = 32,
-    parameter SIZE = 1024,
+    parameter SIZE = 256,
     parameter ADDR_MASK = SIZE - 1
 ) (
     input wire clk,
     input wire rst_n,
 
-    input wire [N-1:0] addr,
-    input wire [N-1:0] write_data,
-    input wire [  3:0] write_enable,
+    input wire [31:0] addr,
+    input wire [31:0] wdata,
+    input wire [ 3:0] wenable,
 
-    output wire [N-1:0] data,
-    output wire [7:0] lcd_data,
-    output wire [1:0] lcd_ctrl,
-    output wire lcd_enable
+    output wire [31:0] rdata
 );
   reg [7:0] mem[0:SIZE-1];
 
   integer i;
 
-  always @(posedge clk or negedge rst_n) begin
-    if (!rst_n) begin
-      for (i = 0; i < SIZE; i = i + 1) begin
-        mem[i] <= 8'hAA;
-      end
-    end else begin
-      if (write_enable[0]) mem[addr&ADDR_MASK] <= write_data[7:0];
-      if (write_enable[1]) mem[(addr+1)&ADDR_MASK] <= write_data[15:8];
-      if (write_enable[2]) mem[(addr+2)&ADDR_MASK] <= write_data[23:16];
-      if (write_enable[3]) mem[(addr+3)&ADDR_MASK] <= write_data[31:24];
-    end
+  always @(posedge clk) begin
+    if (wenable[0]) mem[addr&ADDR_MASK] <= wdata[7:0];
+    if (wenable[1]) mem[(addr+1)&ADDR_MASK] <= wdata[15:8];
+    if (wenable[2]) mem[(addr+2)&ADDR_MASK] <= wdata[23:16];
+    if (wenable[3]) mem[(addr+3)&ADDR_MASK] <= wdata[31:24];
   end
 
-  assign data = {mem[(addr+3)%SIZE], mem[(addr+2)%SIZE], mem[(addr+1)%SIZE], mem[addr%SIZE]};
+  assign rdata[7:0]   = mem[addr&ADDR_MASK];
+  assign rdata[15:8]  = mem[(addr+1)&ADDR_MASK];
+  assign rdata[23:16] = mem[(addr+2)&ADDR_MASK];
+  assign rdata[31:24] = mem[(addr+3)&ADDR_MASK];
 
-  assign lcd_data = mem[0];
-  assign lcd_ctrl = mem[1];
-  assign lcd_enable = mem[2];
+  initial begin
+    $readmemh("data/firmware_data.hex", mem);
+  end
 endmodule

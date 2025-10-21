@@ -20,6 +20,12 @@
 `define RESULT_SRC_PC_TARGET 3'b011
 `define RESULT_SRC_PC_STEP 3'b100
 
+`define BRANCH_NONE 3'd0
+`define BRANCH_JALR 3'd1
+`define BRANCH_JAL 3'd2
+`define BRANCH_BREAK 3'd3
+`define BRANCH_COND 3'd4
+
 module cpu_control (
     input wire [6:0] op,
     input wire [2:0] funct3,
@@ -28,7 +34,7 @@ module cpu_control (
     input wire alu_lt,
     input wire alu_borrow,
 
-    output reg [1:0] pc_src,
+    output reg [2:0] branch_type,
     output reg [2:0] result_src,
     output reg [2:0] data_ext_control,
     output reg [3:0] mem_write,
@@ -38,7 +44,7 @@ module cpu_control (
     output reg reg_write
 );
   always @(*) begin
-    pc_src = `PC_SRC_STEP;
+    branch_type = `BRANCH_NONE;
     result_src = `RESULT_SRC_ALU;
     mem_write = 4'b0000;
     alu_control = 4'b1111;
@@ -93,7 +99,47 @@ module cpu_control (
         imm_src = `IMM_SRC_B;
         alu_src = `ALU_SRC_RD;
         alu_control = 4'b1000;  // sub
+        branch_type = `BRANCH_COND;
+      end
+      7'b1100111: begin  // jalr
+        imm_src = `IMM_SRC_I;
+        alu_src = `ALU_SRC_IMM;
+        alu_control = 4'b0000;  // add
+        branch_type = `BRANCH_JALR;
 
+        result_src = `RESULT_SRC_PC_STEP;
+        reg_write = 1;
+      end
+      7'b1101111: begin  // jal
+        imm_src = `IMM_SRC_J;
+        branch_type = `BRANCH_JAL;
+
+        result_src = `RESULT_SRC_PC_STEP;
+        reg_write = 1;
+      end
+      default: begin
+        $display("Unknown op: %h", op);
+        branch_type = `BRANCH_BREAK;
+      end
+    endcase
+  end
+endmodule
+
+module cpu_branch_logic (
+    input wire [2:0] branch_type,
+    input wire [2:0] funct3,
+    input wire alu_zero,
+    input wire alu_lt,
+    input wire alu_borrow,
+
+    output reg [1:0] pc_src
+);
+  always @(*) begin
+    case (branch_type)
+      `BRANCH_JALR: pc_src = `PC_SRC_ALU;
+      `BRANCH_JAL: pc_src = `PC_SRC_JUMP;
+      `BRANCH_BREAK: pc_src = `PC_SRC_CURRENT;
+      `BRANCH_COND: begin
         case (funct3)
           3'b000:  if (alu_zero) pc_src = `PC_SRC_JUMP;  // beq
           3'b001:  if (!alu_zero) pc_src = `PC_SRC_JUMP;  // bne
@@ -104,26 +150,7 @@ module cpu_control (
           default: pc_src = `PC_SRC_STEP;
         endcase
       end
-      7'b1100111: begin  // jalr
-        imm_src = `IMM_SRC_I;
-        alu_src = `ALU_SRC_IMM;
-        alu_control = 4'b0000;  // add
-        pc_src = `PC_SRC_ALU;
-
-        result_src = `RESULT_SRC_PC_STEP;
-        reg_write = 1;
-      end
-      7'b1101111: begin  // jal
-        imm_src = `IMM_SRC_J;
-        pc_src = `PC_SRC_JUMP;
-
-        result_src = `RESULT_SRC_PC_STEP;
-        reg_write = 1;
-      end
-      default: begin
-        $display("Unknown op: %h", op);
-        pc_src = `PC_SRC_CURRENT;
-      end
+      default: pc_src = `PC_SRC_STEP;
     endcase
   end
 endmodule
@@ -201,13 +228,13 @@ module cpu_alu (
         lt = (result[31] ^ overflow);
       end
       4'b?001: result = src_a << shamt;
-      4'b?010: result = src_a_signed < src_b_signed;
-      4'b?011: result = src_a < src_b;
+      4'b?010: result = {31'b0, src_a_signed < src_b_signed};
+      4'b?011: result = {31'b0, src_a < src_b};
       4'b?100: result = src_a ^ src_b;
       4'b0101: result = src_a >> shamt;
       4'b1101: result = src_a_signed >>> shamt;
       4'b?110: result = src_a | src_b;
-      4'b?111: result = src_a & src_b;
+      4'b0111: result = src_a & src_b;
       4'b1111: result = 0;
       default: result = 0;
     endcase
@@ -261,12 +288,13 @@ module cpu (
 
     output wire [31:0] data_addr,
     output wire [31:0] data_wdata,
-    output wire [ 3:0] data_we,
+    output wire [ 3:0] data_wenable,
     input  wire [31:0] data_rdata
 );
   reg [31:0] pc;
 
   wire [1:0] pc_src;
+  wire [2:0] branch_type;
   wire [2:0] result_src;
   wire mem_write;
   wire [3:0] alu_control;
@@ -277,22 +305,33 @@ module cpu (
   wire alu_zero, alu_borrow, alu_lt;
   wire [2:0] data_ext_control;
 
-  cpu_control control (
-      .op(instr_data[6:0]),
-      .funct3(instr_data[14:12]),
-      .funct7(instr_data[31:25]),
-      .alu_zero(alu_zero),
-      .alu_borrow(alu_borrow),
-      .alu_lt(alu_lt),
+  wire [6:0] op = instr_data[6:0];
+  wire [2:0] funct3 = instr_data[14:12];
+  wire [6:0] funct7 = instr_data[31:25];
 
-      .pc_src(pc_src),
+  cpu_control control (
+      .op(op),
+      .funct3(funct3),
+      .funct7(funct7),
+
+      .branch_type(branch_type),
       .result_src(result_src),
-      .mem_write(data_we),
+      .mem_write(data_wenable),
       .data_ext_control(data_ext_control),
       .alu_control(alu_control),
       .alu_src(alu_src),
       .imm_src(imm_src),
       .reg_write(reg_write)
+  );
+
+  cpu_branch_logic branch_logic (
+      .branch_type(branch_type),
+      .funct3(funct3),
+      .alu_zero(alu_zero),
+      .alu_borrow(alu_borrow),
+      .alu_lt(alu_lt),
+
+      .pc_src(pc_src)
   );
 
   wire [31:0] imm_ext;
@@ -342,8 +381,8 @@ module cpu (
       .rd2(rd2)
   );
 
-  assign data_addr = alu_result;
-  assign data_wdata   = rd2;
+  assign data_addr  = alu_result;
+  assign data_wdata = rd2;
 
   cpu_alu alu (
       .src_a  (rd1),

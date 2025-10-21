@@ -1,4 +1,4 @@
-`timescale 1ns / 1ps
+`timescale 1ns / 1ps `default_nettype none
 
 module cpu_tb ();
   reg clk, rst_n;
@@ -26,10 +26,10 @@ module cpu_tb ();
       .rst_n(rst_n),
 
       .addr(data_addr),
-      .write_data(data_wdata),
-      .write_enable(data_wenable),
+      .wdata(data_wdata),
+      .wenable(data_wenable),
 
-      .data(data_rdata)
+      .rdata(data_rdata)
   );
 
   cpu c (
@@ -41,7 +41,7 @@ module cpu_tb ();
 
       .data_addr(data_addr),
       .data_wdata(data_wdata),
-      .data_we(data_wenable),
+      .data_wenable(data_wenable),
       .data_rdata(data_rdata)
   );
 

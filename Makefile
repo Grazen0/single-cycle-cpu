@@ -15,7 +15,8 @@ IVERILOG_FLAGS := $(INC_FLAGS)
 DATA_DIR := ./data
 FIRMWARE_DIR := firmware
 
-FIRMWARE_HEX = firmware.hex
+FIRMWARE_INSTR_HEX = firmware_instr.hex
+FIRMWARE_DATA_HEX = firmware_data.hex
 
 .PHONY: clean run wave firmware
 
@@ -28,16 +29,17 @@ clean:
 
 FORCE: ;
 
-$(DATA_DIR)/$(FIRMWARE_HEX): FORCE
-	@if make -C $(FIRMWARE_DIR) -q; then \
+$(DATA_DIR)/%.hex: FORCE
+	@set -e; \
+	if make -C $(FIRMWARE_DIR) -q; then \
 		echo "Up to date"; \
 	else \
 		echo "Building firmware..."; \
 		make -C $(FIRMWARE_DIR); \
-		cp $(FIRMWARE_DIR)/build/*.hex $(DATA_DIR)/$(FIRMWARE_HEX); \
+		cp $(FIRMWARE_DIR)/build/*.hex $(DATA_DIR); \
 	fi
 
-$(BUILD_DIR)/%: $(TB_DIR)/%.v $(SRCS) $(DATA_DIR)/$(FIRMWARE_HEX)
+$(BUILD_DIR)/%: $(TB_DIR)/%.v $(SRCS) $(DATA_DIR)/$(FIRMWARE_INSTR_HEX) $(DATA_DIR)/$(FIRMWARE_DATA_HEX)
 	mkdir -p $(dir $@)
 	iverilog $(IVERILOG_FLAGS) -o $@ $< $(SRCS) 
 
@@ -46,7 +48,7 @@ run: $(BUILD_DIR)/$(TB)
 	    echo "Usage: make run TB=<testbench_name>"; \
 	    exit 1; \
 	fi
-	vvp $<
+	vvp $(VVP_FLAGS) $<
 
 wave: $(BUILD_DIR)/$(TB)
 	@if [ -z "$(TB)" ]; then \

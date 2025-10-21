@@ -1,9 +1,22 @@
 ENTRY(_start)
 
+PHDRS {
+  text PT_LOAD FLAGS(5); /* rx */
+  data PT_LOAD FLAGS(6); /* rw */
+}
+
 SECTIONS {
-  . = 0x0;
-  .text : { *(.text*) }
-  .rodata : { *(.rodata*) }
-  .data : { *(.data*) }
-  .bss : { *(.bss*) *(COMMON) }
+  .text : {
+    *(.text*)
+    *(.rodata*) 
+  } :text
+
+  .data : {
+    *(.data*)
+  } :data
+
+  .bss : {
+    *(.bss*)
+    *(COMMON)
+  } :data
 }
