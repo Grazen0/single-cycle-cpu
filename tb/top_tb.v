@@ -11,8 +11,8 @@ module top_tb ();
 
   always @(posedge clk or posedge rst_n) begin
     #1;
-    $display("pc = %h, t2 = %h, mem = %h %h %h %h", t.instr_addr, t.c.register_file.regs[7],
-             t.ram.mem[0], t.ram.mem[1], t.ram.mem[2], t.ram.mem[3]);
+    // $display("pc = %h, t2 = %h, mem = %h %h %h %h", t.instr_addr, t.c.register_file.regs[7],
+    //          t.ram.mem[0], t.ram.mem[1], t.ram.mem[2], t.ram.mem[3]);
   end
 
   top t (
@@ -34,6 +34,6 @@ module top_tb ();
     rst_n = 0;
     #1 rst_n = 1;
 
-    #6000 $finish();
+    #5000 $finish();
   end
 endmodule

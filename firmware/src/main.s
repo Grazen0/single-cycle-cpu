@@ -2,7 +2,9 @@
 .global _start
 
 _start:
-    li      sp, 1024
+    lui sp, %hi(__stack_top)
+    addi sp, sp, %lo(__stack_top)
+
     call    start
 
 1:

@@ -13,7 +13,7 @@ pkgs.mkShell {
     xxd
 
     bear
-    glibc_multi
+    riscvPkgs.buildPackages.glibc_multi
     riscvPkgs.buildPackages.binutils
     riscvPkgs.buildPackages.gcc
   ];

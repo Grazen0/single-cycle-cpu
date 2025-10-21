@@ -6,27 +6,25 @@ MEMORY {
 }
 
 SECTIONS {
+  . = 0x00000000;
+
   .text : {
     *(.text._start) /* Ensure _start at 0x0 */
     *(.text*)
-
-    . = ALIGN(4);
     _etext = .;
   } > INSTR
 
-  .data : AT(ORIGIN(.text) + SIZEOF(.text)) {
-    _srodata = .;
+  . = _etext;
 
-    *(.rodata*) 
-
-    _erodata = .;
-    . = ALIGN(4);
+  .data : AT(ORIGIN(INSTR) + LENGTH(INSTR)) {
     _sdata = .;
 
+    *(.rodata*) 
+    . = ALIGN(4);
     *(.data*)
 
-    ._edata = .;
     . = ALIGN(4);
+    ._edata = .;
     ._sbss = .;
 
     *(.bss*)
@@ -34,7 +32,9 @@ SECTIONS {
 
     . = ALIGN(4);
     _ebss = .;
+
   } > DATA
 
+  _end = .;
   __stack_top = ORIGIN(DATA) + LENGTH(DATA);
 }

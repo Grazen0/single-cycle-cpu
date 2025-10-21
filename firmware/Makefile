@@ -39,10 +39,10 @@ $(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.bin
 	$(XXD) -p -c4 -e $< | awk '{print $$2}' > $@
 
 $(BUILD_DIR)/$(TARGET_INSTR_BIN): $(BUILD_DIR)/$(TARGET_EXEC)
-	$(OBJCOPY) -O binary --only-section=.text --only-section=.rodata $< $@
+	$(OBJCOPY) -O binary --only-section=.text $< $@
 
 $(BUILD_DIR)/$(TARGET_DATA_BIN): $(BUILD_DIR)/$(TARGET_EXEC)
-	$(OBJCOPY) -O binary --only-section=.data --only-section=.bss $< $@
+	$(OBJCOPY) -O binary --only-section=.rodata --only-section=.data --only-section=.bss $< $@
 
 $(BUILD_DIR)/$(TARGET_EXEC): $(OBJS) $(LINKER)
 	$(CC) $(CFLAGS) -T $(LINKER) -o $@ $(OBJS) $(LDFLAGS)
