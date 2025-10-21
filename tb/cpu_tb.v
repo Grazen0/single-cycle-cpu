@@ -22,8 +22,7 @@ module cpu_tb ();
   end
 
   simple_ram ram (
-      .clk  (clk),
-      .rst_n(rst_n),
+      .clk(clk),
 
       .addr(data_addr),
       .wdata(data_wdata),
@@ -44,15 +43,6 @@ module cpu_tb ();
       .data_wenable(data_wenable),
       .data_rdata(data_rdata)
   );
-
-  integer i;
-
-  generate
-    genvar idx;
-    for (idx = 0; idx < 32; idx = idx + 1) begin : g_register
-      wire [31:0] val = cpu_tb.c.register_file.regs[idx];
-    end
-  endgenerate
 
   initial begin
     $dumpvars(0, cpu_tb);

@@ -29,8 +29,7 @@ module top (
   wire [3:0] data_wenable;
 
   simple_ram ram (
-      .clk  (clk_out),
-      .rst_n(rst_n),
+      .clk(clk_out),
 
       .addr(data_addr),
       .wdata(data_wdata),

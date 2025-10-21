@@ -15,11 +15,14 @@ LINKER := ./linker.ld
 INC_DIRS := $(shell find $(SRC_DIRS) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-CFLAGS := $(INC_FLAGS) -nostdlib -no-pie -march=rv32i -mabi=ilp32 -std=c23 -g
+CFLAGS := $(INC_FLAGS) -nostdlib -no-pie -march=rv32i -mabi=ilp32 -std=c23 -O2 -g
 
 CC := riscv32-unknown-none-elf-gcc
 OBJCOPY := riscv32-unknown-none-elf-objcopy
 XXD := xxd
+
+BEAR := bear
+CDB := compile_commands.json
 
 .PHONY: all clean
 
@@ -28,8 +31,12 @@ all: $(BUILD_DIR)/$(TARGET_INSTR_HEX) $(BUILD_DIR)/$(TARGET_DATA_HEX)
 clean:
 	rm -rf $(BUILD_DIR)
 
+compdb:
+	mkdir -p $(BUILD_DIR)
+	$(BEAR) --output $(BUILD_DIR)/$(CDB) -- make -B
+
 $(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.bin
-	$(XXD) -p -c 1 $< > $@
+	$(XXD) -p -c4 -e $< | awk '{print $$2}' > $@
 
 $(BUILD_DIR)/$(TARGET_INSTR_BIN): $(BUILD_DIR)/$(TARGET_EXEC)
 	$(OBJCOPY) -O binary --only-section=.text --only-section=.rodata $< $@

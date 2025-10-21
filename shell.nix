@@ -12,6 +12,7 @@ pkgs.mkShell {
     iverilog
     xxd
 
+    bear
     glibc_multi
     riscvPkgs.buildPackages.binutils
     riscvPkgs.buildPackages.gcc

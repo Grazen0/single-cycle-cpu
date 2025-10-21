@@ -1,22 +1,40 @@
 ENTRY(_start)
 
-PHDRS {
-  text PT_LOAD FLAGS(5); /* rx */
-  data PT_LOAD FLAGS(6); /* rw */
+MEMORY {
+  INSTR (rx) : ORIGIN = 0x00000000, LENGTH = 1024
+  DATA  (rw) : ORIGIN = 0x00000000, LENGTH = 1024
 }
 
 SECTIONS {
   .text : {
+    *(.text._start) /* Ensure _start at 0x0 */
     *(.text*)
+
+    . = ALIGN(4);
+    _etext = .;
+  } > INSTR
+
+  .data : AT(ORIGIN(.text) + SIZEOF(.text)) {
+    _srodata = .;
+
     *(.rodata*) 
-  } :text
 
-  .data : {
+    _erodata = .;
+    . = ALIGN(4);
+    _sdata = .;
+
     *(.data*)
-  } :data
 
-  .bss : {
+    ._edata = .;
+    . = ALIGN(4);
+    ._sbss = .;
+
     *(.bss*)
     *(COMMON)
-  } :data
+
+    . = ALIGN(4);
+    _ebss = .;
+  } > DATA
+
+  __stack_top = ORIGIN(DATA) + LENGTH(DATA);
 }

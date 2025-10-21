@@ -9,16 +9,16 @@
 `define ALU_SRC_RD 1'b0
 `define ALU_SRC_IMM 1'b1
 
-`define PC_SRC_STEP 2'b00
-`define PC_SRC_JUMP 2'b01
-`define PC_SRC_ALU 2'b10
-`define PC_SRC_CURRENT 2'b11
+`define PC_SRC_STEP 2'd0
+`define PC_SRC_JUMP 2'd1
+`define PC_SRC_ALU 2'd2
+`define PC_SRC_CURRENT 2'd3
 
-`define RESULT_SRC_ALU 3'b000
-`define RESULT_SRC_DATA 3'b001
-`define RESULT_SRC_IMM 3'b010
-`define RESULT_SRC_PC_TARGET 3'b011
-`define RESULT_SRC_PC_STEP 3'b100
+`define RESULT_SRC_ALU 3'd0
+`define RESULT_SRC_DATA 3'd1
+`define RESULT_SRC_IMM 3'd2
+`define RESULT_SRC_PC_TARGET 3'd3
+`define RESULT_SRC_PC_STEP 3'd4
 
 `define BRANCH_NONE 3'd0
 `define BRANCH_JALR 3'd1
@@ -135,22 +135,26 @@ module cpu_branch_logic (
     output reg [1:0] pc_src
 );
   always @(*) begin
+    pc_src = `PC_SRC_STEP;
+
     case (branch_type)
-      `BRANCH_JALR: pc_src = `PC_SRC_ALU;
-      `BRANCH_JAL: pc_src = `PC_SRC_JUMP;
+      `BRANCH_JALR:  pc_src = `PC_SRC_ALU;
+      `BRANCH_JAL:   pc_src = `PC_SRC_JUMP;
       `BRANCH_BREAK: pc_src = `PC_SRC_CURRENT;
       `BRANCH_COND: begin
         case (funct3)
-          3'b000:  if (alu_zero) pc_src = `PC_SRC_JUMP;  // beq
-          3'b001:  if (!alu_zero) pc_src = `PC_SRC_JUMP;  // bne
-          3'b100:  if (alu_lt) pc_src = `PC_SRC_JUMP;  // blt
-          3'b101:  if (!alu_lt) pc_src = `PC_SRC_JUMP;  // bge
-          3'b110:  if (alu_borrow) pc_src = `PC_SRC_JUMP;  // bltu
-          3'b111:  if (!alu_borrow) pc_src = `PC_SRC_JUMP;  // bgeu
-          default: pc_src = `PC_SRC_STEP;
+          3'b000: if (alu_zero) pc_src = `PC_SRC_JUMP;  // beq
+          3'b001: if (!alu_zero) pc_src = `PC_SRC_JUMP;  // bne
+          3'b100: if (alu_lt) pc_src = `PC_SRC_JUMP;  // blt
+          3'b101: if (!alu_lt) pc_src = `PC_SRC_JUMP;  // bge
+          3'b110: if (alu_borrow) pc_src = `PC_SRC_JUMP;  // bltu
+          3'b111: if (!alu_borrow) pc_src = `PC_SRC_JUMP;  // bgeu
+          default: begin
+          end
         endcase
       end
-      default: pc_src = `PC_SRC_STEP;
+      default: begin
+      end
     endcase
   end
 endmodule
@@ -277,6 +281,13 @@ module cpu_register_file (
 
   assign rd1 = (a1 == 0) ? 0 : regs[a1];
   assign rd2 = (a2 == 0) ? 0 : regs[a2];
+
+  generate
+    genvar idx;
+    for (idx = 0; idx < 32; idx = idx + 1) begin : g_register
+      wire [31:0] val = regs[idx];
+    end
+  endgenerate
 endmodule
 
 module cpu (
