@@ -2,96 +2,51 @@
 .global _start
 
 LCD_DATA = 0
-LCD_OPTS = 4
-LCD_ENABLE = 8
+LCD_OPTS = 1
+LCD_ENABLE = 2
 
 LCD_CLEAR = 0b00000001
 LCD_RETURN = 0b00000010
 LCD_SET = 0b00001110
 
 _start:
-    sw      zero, LCD_OPTS(zero) # write instruction
+    li      x1, 0x28
+    sb      x1, 0(zero)
+    li      x1, 0xAF
+    sb      x1, 1(zero)
+    li      x1, 0x1234
+    sh      x1, 2(zero)
 
-    li      s1, 1
+    lw      x1, 0(zero)
+    lh      x1, 0(zero)
 
-    li      s0, LCD_CLEAR
-    sw      s0, LCD_DATA(zero)
-    sw      s1, LCD_ENABLE(zero)
-    sw      zero, LCD_ENABLE(zero)
+1:
+    j       1b
 
-    li      s0, LCD_RETURN
-    sw      s0, LCD_DATA(zero)
-    sw      s4, LCD_ENABLE(zero)
-    sw      zero, LCD_ENABLE(zero)
+    li      t0, 0b00           # write instruction
+    sw      t0, LCD_OPTS(zero)
 
-    li      s0, LCD_SET
-    sw      s0, LCD_DATA(zero)
-    sw      s1, LCD_ENABLE(zero)
-    sw      zero, LCD_ENABLE(zero)
+    li      t0, 0b00           # write data
+    sw      t0, LCD_OPTS(zero)
 
-    li      s0, 0b10 # write data
-    sw      s0, LCD_OPTS(zero)
+loop:
+    j       loop
 
-    li      s0, 'H'
-    sw      s0, LCD_DATA(zero)
-    sw      s1, LCD_ENABLE(zero)
-    sw      zero, LCD_ENABLE(zero)
+print_str:
+    lb      t0, 0(a0)
+    beq     t0, zero, 1f
 
-    li      s0, 'e'
-    sw      s0, LCD_DATA(zero)
-    sw      s1, LCD_ENABLE(zero)
-    sw      zero, LCD_ENABLE(zero)
+    sb      t0, LCD_DATA(zero)
 
-    li      s0, 'l'
-    sw      s0, LCD_DATA(zero)
-    sw      s1, LCD_ENABLE(zero)
-    sw      zero, LCD_ENABLE(zero)
+    li      t1, 1
+    sb      t1, LCD_ENABLE(zero)
+    sb      zero, LCD_ENABLE(zero)
 
-    sw      s1, LCD_ENABLE(zero)
-    sw      zero, LCD_ENABLE(zero)
+    addi    a0, a0, 1
+    j       print_str
 
-    li      s0, 'o'
-    sw      s0, LCD_DATA(zero)
-    sw      s1, LCD_ENABLE(zero)
-    sw      zero, LCD_ENABLE(zero)
+1:
+    ret
 
-    li      s0, ','
-    sw      s0, LCD_DATA(zero)
-    sw      s1, LCD_ENABLE(zero)
-    sw      zero, LCD_ENABLE(zero)
-
-    li      s0, ' '
-    sw      s0, LCD_DATA(zero)
-    sw      s1, LCD_ENABLE(zero)
-    sw      zero, LCD_ENABLE(zero)
-
-    li      s0, 'w'
-    sw      s0, LCD_DATA(zero)
-    sw      s1, LCD_ENABLE(zero)
-    sw      zero, LCD_ENABLE(zero)
-
-    li      s0, 'o'
-    sw      s0, LCD_DATA(zero)
-    sw      s1, LCD_ENABLE(zero)
-    sw      zero, LCD_ENABLE(zero)
-
-    li      s0, 'r'
-    sw      s0, LCD_DATA(zero)
-    sw      s1, LCD_ENABLE(zero)
-    sw      zero, LCD_ENABLE(zero)
-
-    li      s0, 'l'
-    sw      s0, LCD_DATA(zero)
-    sw      s1, LCD_ENABLE(zero)
-    sw      zero, LCD_ENABLE(zero)
-
-    li      s0, 'd'
-    sw      s0, LCD_DATA(zero)
-    sw      s1, LCD_ENABLE(zero)
-    sw      zero, LCD_ENABLE(zero)
-
-    li      s0, '!'
-    sw      s0, LCD_DATA(zero)
-    sw      s1, LCD_ENABLE(zero)
-    sw      zero, LCD_ENABLE(zero)
-
+.data
+hello: .asciz "Hello, world!"

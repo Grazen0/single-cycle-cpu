@@ -8,7 +8,7 @@ module top (
     output wire lcd_enable
 );
   clk_divider #(
-      .PERIOD(2)
+      .PERIOD(1_000_000)
   ) divider (
       .clk_in (clk),
       .rst_n  (rst_n),
@@ -23,18 +23,18 @@ module top (
       .data(instr_data)
   );
 
-  wire [31:0] data_addr, data_wd, data_data;
-  wire data_we;
+  wire [31:0] data_addr, data_wdata, data_rdata;
+  wire [3:0] data_we;
 
   simple_ram ram (
       .clk  (clk_out),
       .rst_n(rst_n),
 
       .addr(data_addr),
-      .write_data(data_wd),
+      .write_data(data_wdata),
       .write_enable(data_we),
 
-      .data(data_data),
+      .data(data_rdata),
 
       .lcd_data  (lcd_data),
       .lcd_ctrl  (lcd_ctrl),
@@ -49,8 +49,8 @@ module top (
       .instr_data(instr_data),
 
       .data_addr(data_addr),
-      .data_wd(data_wd),
-      .data_write_enable(data_we),
-      .data_data(data_data)
+      .data_wdata  (data_wdata),
+      .data_we  (data_we),
+      .data_rdata(data_rdata)
   );
 endmodule

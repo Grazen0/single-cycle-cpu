@@ -26,13 +26,16 @@ clean:
 	rm -rf $(BUILD_DIR)
 	rm -f dump.vcd
 
-firmware:
-	make -C $(FIRMWARE_DIR)
-	cp $(FIRMWARE_DIR)/build/*.hex $(DATA_DIR)/$(FIRMWARE_HEX)
+FORCE: ;
 
-$(DATA_DIR)/$(FIRMWARE_HEX):
-	make -C $(FIRMWARE_DIR)
-	cp $(FIRMWARE_DIR)/build/*.hex $@
+$(DATA_DIR)/$(FIRMWARE_HEX): FORCE
+	@if make -C $(FIRMWARE_DIR) -q; then \
+		echo "Up to date"; \
+	else \
+		echo "Building firmware..."; \
+		make -C $(FIRMWARE_DIR); \
+		cp $(FIRMWARE_DIR)/build/*.hex $(DATA_DIR)/$(FIRMWARE_HEX); \
+	fi
 
 $(BUILD_DIR)/%: $(TB_DIR)/%.v $(SRCS) $(DATA_DIR)/$(FIRMWARE_HEX)
 	mkdir -p $(dir $@)

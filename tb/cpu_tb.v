@@ -12,18 +12,24 @@ module cpu_tb ();
       .data(instr_data)
   );
 
-  wire [31:0] data_addr, data_wd, data_data;
-  wire data_we;
+  wire [31:0] data_addr, data_wdata, data_rdata;
+  wire [3:0] data_wenable;
+
+  always @(posedge clk or posedge rst_n) begin
+    #1;
+    $display("pc = %h, x1 = %h, mem = %h %h %h %h", instr_addr, c.register_file.regs[1],
+             ram.mem[0], ram.mem[1], ram.mem[2], ram.mem[3]);
+  end
 
   simple_ram ram (
       .clk  (clk),
       .rst_n(rst_n),
 
       .addr(data_addr),
-      .write_data(data_wd),
-      .write_enable(data_we),
+      .write_data(data_wdata),
+      .write_enable(data_wenable),
 
-      .data(data_data)
+      .data(data_rdata)
   );
 
   cpu c (
@@ -34,9 +40,9 @@ module cpu_tb ();
       .instr_data(instr_data),
 
       .data_addr(data_addr),
-      .data_wd(data_wd),
-      .data_write_enable(data_we),
-      .data_data(data_data)
+      .data_wdata(data_wdata),
+      .data_we(data_wenable),
+      .data_rdata(data_rdata)
   );
 
   integer i;
