@@ -67,4 +67,10 @@ module top (
     end
   end
 
+  always @(negedge lcd_enable) begin
+    if (lcd_ctrl == 2'b10) begin
+      $write("%c", lcd_data);
+    end
+  end
+
 endmodule

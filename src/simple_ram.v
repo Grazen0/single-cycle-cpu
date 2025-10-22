@@ -37,7 +37,13 @@ module simple_ram #(
 
   assign rdata = phy_data >> (8 * offset);
 
+  integer i;
+
   initial begin
+    for (i = 0; i < SIZE; i = i + 1) begin
+      mem[i] = 32'h00000000;
+    end
+
     $readmemh("data/firmware_data.hex", mem);
   end
 endmodule

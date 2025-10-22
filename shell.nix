@@ -1,20 +1,32 @@
 {
-  pkgs ? import <nixpkgs> { },
+  mkShell,
+
+  riscvPackages,
+
+  gtkwave,
+  iverilog,
+  xxd,
+  bear,
 }:
-let
-  riscvPkgs = import <nixpkgs> {
-    crossSystem.config = "riscv32-unknown-none-elf";
-  };
-in
-pkgs.mkShell {
-  packages = with pkgs; [
+mkShell {
+  hardeningDisable = [
+    "relro"
+    "bindnow"
+  ];
+
+  packages = [
     gtkwave
     iverilog
     xxd
-
     bear
-    riscvPkgs.buildPackages.glibc_multi
-    riscvPkgs.buildPackages.binutils
-    riscvPkgs.buildPackages.gcc
+
+    riscvPackages.binutils
+    riscvPackages.gcc
+    (riscvPackages.newlib-nano.overrideAttrs (oldAttrs: {
+      nativeBuildInputs = (oldAttrs.nativeBuildInputs or [ ]) ++ [
+        riscvPackages.gcc
+        riscvPackages.binutils
+      ];
+    }))
   ];
 }

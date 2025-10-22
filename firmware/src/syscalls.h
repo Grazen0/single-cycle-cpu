@@ -3,4 +3,6 @@
 
 void init_heap(void);
 
+int write(int file, char *ptr, int len);
+
 #endif

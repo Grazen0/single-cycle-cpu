@@ -15,10 +15,12 @@ LINKER := ./linker.ld
 INC_DIRS := $(shell find $(SRC_DIRS) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-CFLAGS := $(INC_FLAGS) -nostdlib -no-pie -march=rv32i -mabi=ilp32 -std=c23 -O2 -g
+CFLAGS := $(INC_FLAGS) -no-pie -march=rv32i -mabi=ilp32 -O2 -g \
+		  -ffunction-sections -fdata-sections -Wl,-gc-sections \
+		  -nostartfiles
 
-CC := riscv32-unknown-none-elf-gcc
-OBJCOPY := riscv32-unknown-none-elf-objcopy
+CC := riscv32-none-elf-gcc
+OBJCOPY := riscv32-none-elf-objcopy
 XXD := xxd
 
 BEAR := bear

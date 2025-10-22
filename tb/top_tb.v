@@ -30,10 +30,15 @@ module top_tb ();
     $dumpvars(0, top_tb.t.c.register_file.regs[10]);
     $dumpvars(0, top_tb.t.c.register_file.regs[15]);
 
+    $display("");
+
     clk   = 1;
     rst_n = 0;
     #1 rst_n = 1;
 
-    #5000 $finish();
+    #100000;
+    $display("");
+    $display("");
+    $finish();
   end
 endmodule

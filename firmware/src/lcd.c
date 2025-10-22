@@ -1,12 +1,13 @@
 #include "lcd.h"
+#include <stddef.h>
 #include <stdint.h>
 
-#define LCD_DATA (*(volatile uint8_t *)0x8000'0000)
-#define LCD_OPTS (*(volatile uint8_t *)0x8000'0001)
-#define LCD_ENABLE (*(volatile uint8_t *)0x8000'0002)
+#define LCD_DATA (*(volatile uint8_t *)0x80000000)
+#define LCD_OPTS (*(volatile uint8_t *)0x80000001)
+#define LCD_ENABLE (*(volatile uint8_t *)0x80000002)
 
-static constexpr uint8_t LCD_WRITE_INSTR = 0b00;
-static constexpr uint8_t LCD_WRITE_DATA = 0b10;
+static const uint8_t LCD_WRITE_INSTR = 0b00;
+static const uint8_t LCD_WRITE_DATA = 0b10;
 
 static inline void lcd_send(const uint8_t data)
 {
@@ -33,4 +34,30 @@ void lcd_print(const char *restrict s)
 
     while (*s != '\0')
         lcd_send(*s++);
+}
+
+void lcd_print_sized(const char *s, const size_t size)
+{
+    LCD_OPTS = LCD_WRITE_DATA;
+
+    for (size_t i = 0; i < size; ++i)
+        lcd_send(*s++);
+}
+
+void lcd_print_int(int n)
+{
+
+    static const size_t MAX_DIGITS = 10;
+
+    int digits[MAX_DIGITS];
+    size_t i = 0;
+
+    while (n != 0) {
+        digits[i] = n % 10;
+        n /= 10;
+        ++i;
+    }
+
+    for (int j = 0; j < i; ++j)
+        lcd_print_char('0' + digits[i - 1 - j]);
 }

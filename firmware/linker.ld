@@ -1,8 +1,8 @@
 ENTRY(_start)
 
 MEMORY {
-  INSTR (rx) : ORIGIN = 0x00000000, LENGTH = 1024
-  DATA  (rw) : ORIGIN = 0x00000000, LENGTH = 1024
+  INSTR (rx) : ORIGIN = 0x00000000, LENGTH = 20K
+  DATA  (rw) : ORIGIN = 0x00000000, LENGTH = 20K
 }
 
 SECTIONS {
@@ -24,15 +24,14 @@ SECTIONS {
     *(.data*)
 
     . = ALIGN(4);
-    ._edata = .;
-    ._sbss = .;
+    _edata = .;
+    _sbss = .;
 
     *(.bss*)
     *(COMMON)
 
     . = ALIGN(4);
     _ebss = .;
-
   } > DATA
 
   _end = .;
