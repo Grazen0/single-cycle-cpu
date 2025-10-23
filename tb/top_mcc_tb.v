@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps `default_nettype none
 
-module top_tb ();
+module top_mcc_tb ();
   reg clk, rst_n;
   always #5 clk = ~clk;
 
@@ -9,13 +9,7 @@ module top_tb ();
   wire [1:0] lcd_ctrl;
   wire lcd_enable;
 
-  always @(posedge clk or posedge rst_n) begin
-    #1;
-    // $display("pc = %h, t2 = %h, mem = %h %h %h %h", t.instr_addr, t.c.register_file.regs[7],
-    //          t.ram.mem[0], t.ram.mem[1], t.ram.mem[2], t.ram.mem[3]);
-  end
-
-  top t (
+  top_mcc top (
       .clk  (clk),
       .rst_n(rst_n),
 
@@ -26,9 +20,7 @@ module top_tb ();
   );
 
   initial begin
-    $dumpvars(0, top_tb);
-    $dumpvars(0, top_tb.t.c.register_file.regs[10]);
-    $dumpvars(0, top_tb.t.c.register_file.regs[15]);
+    $dumpvars(0, top_mcc_tb);
 
     $display("");
 

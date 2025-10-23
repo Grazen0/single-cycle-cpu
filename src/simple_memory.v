@@ -1,6 +1,6 @@
 `default_nettype none
 
-module simple_ram #(
+module simple_memory #(
     parameter SIZE = 2 ** 12,
     parameter ADDR_MASK = SIZE - 1
 ) (
@@ -14,14 +14,12 @@ module simple_ram #(
 );
   reg [31:0] mem[0:SIZE-1];
 
-  wire [29:0] phy_addr = addr[31:2] & ADDR_MASK;
+  wire [29:0] word_addr = addr[31:2] & ADDR_MASK[31:2];
   wire [1:0] offset = addr[1:0];
-  wire [31:0] phy_data = mem[phy_addr];
-
   reg [31:0] wvalue;
 
   always @(*) begin
-    wvalue = mem[phy_addr];
+    wvalue = mem[word_addr];
 
     if (wenable[0]) wvalue[7:0] = wdata[7:0];
     if (wenable[1]) wvalue[15:8] = wdata[15:8];
@@ -31,19 +29,15 @@ module simple_ram #(
 
   always @(posedge clk) begin
     if (|wenable) begin
-      mem[phy_addr] <= wvalue;
+      mem[word_addr] <= wvalue;
     end
   end
 
-  assign rdata = phy_data >> (8 * offset);
+  assign rdata = mem[word_addr] >> (8 * offset);
 
   integer i;
 
   initial begin
-    for (i = 0; i < SIZE; i = i + 1) begin
-      mem[i] = 32'h00000000;
-    end
-
-    $readmemh("data/firmware_data.hex", mem);
+    $readmemh("data/firmware.hex", mem);
   end
 endmodule

@@ -1,7 +1,11 @@
 PROJECT_NAME := firmware
 TARGET_EXEC := $(PROJECT_NAME).elf
+
+TARGET_BIN := $(PROJECT_NAME).bin
 TARGET_INSTR_BIN := $(PROJECT_NAME)_instr.bin
 TARGET_DATA_BIN := $(PROJECT_NAME)_data.bin
+
+TARGET_HEX := $(PROJECT_NAME).hex
 TARGET_INSTR_HEX := $(PROJECT_NAME)_instr.hex
 TARGET_DATA_HEX := $(PROJECT_NAME)_data.hex
 
@@ -28,7 +32,7 @@ CDB := compile_commands.json
 
 .PHONY: all clean
 
-all: $(BUILD_DIR)/$(TARGET_INSTR_HEX) $(BUILD_DIR)/$(TARGET_DATA_HEX)
+all: $(BUILD_DIR)/$(TARGET_HEX) $(BUILD_DIR)/$(TARGET_INSTR_HEX) $(BUILD_DIR)/$(TARGET_DATA_HEX)
 
 clean:
 	rm -rf $(BUILD_DIR)
@@ -39,6 +43,9 @@ compdb:
 
 $(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.bin
 	$(XXD) -p -c4 -e $< | awk '{print $$2}' > $@
+
+$(BUILD_DIR)/$(TARGET_BIN): $(BUILD_DIR)/$(TARGET_EXEC)
+	$(OBJCOPY) -O binary $< $@
 
 $(BUILD_DIR)/$(TARGET_INSTR_BIN): $(BUILD_DIR)/$(TARGET_EXEC)
 	$(OBJCOPY) -O binary --only-section=.text $< $@

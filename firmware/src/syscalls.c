@@ -7,17 +7,15 @@
 #undef errno
 extern int errno;
 
-static char *heap_end;
+static char *heap_end = NULL;
+static int thing = 0x123456;
 
 void init_heap(void)
 {
-    char *tmp;
-    asm volatile("lui %0, %%hi(_end)\n"
-                 "addi %0, %0, %%lo(_end)\n"
-                 : "=r"(tmp)
-                 :
-                 :);
-    heap_end = tmp;
+    // extern void _end;
+
+    lcd_print("Thing: ");
+    lcd_print_int(-123);
 }
 
 void _exit(void)

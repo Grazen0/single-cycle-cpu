@@ -1,7 +1,7 @@
 `default_nettype none
 
 module simple_rom #(
-    parameter SIZE = 1024,
+    parameter SIZE = 2 ** 16,
     parameter ADDR_MASK = SIZE - 1
 ) (
     input  wire [31:0] addr,

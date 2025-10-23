@@ -26,7 +26,7 @@
 `define BRANCH_BREAK 3'd3
 `define BRANCH_COND 3'd4
 
-module cpu_control (
+module scc_control (
     input wire [6:0] op,
     input wire [2:0] funct3,
     input wire [6:0] funct7,
@@ -125,7 +125,7 @@ module cpu_control (
   end
 endmodule
 
-module cpu_branch_logic (
+module scc_branch_logic (
     input wire [2:0] branch_type,
     input wire [2:0] funct3,
     input wire alu_zero,
@@ -159,7 +159,7 @@ module cpu_branch_logic (
   end
 endmodule
 
-module cpu_imm_extend (
+module scc_imm_extend (
     input  wire [24:0] data,
     input  wire [ 2:0] imm_src,
     output reg  [31:0] imm_ext
@@ -182,7 +182,7 @@ module cpu_imm_extend (
   end
 endmodule
 
-module cpu_data_extend (
+module scc_data_extend (
     input  wire [31:0] data,
     input  wire [ 2:0] control,
     output reg  [31:0] data_ext
@@ -199,7 +199,7 @@ module cpu_data_extend (
   end
 endmodule
 
-module cpu_alu (
+module scc_alu (
     input wire [31:0] src_a,
     input wire [31:0] src_b,
     input wire [ 3:0] control,
@@ -248,7 +248,7 @@ module cpu_alu (
   assign neg  = result[31];
 endmodule
 
-module cpu_register_file (
+module scc_register_file (
     input wire clk,
     input wire rst_n,
     input wire [4:0] a1,
@@ -290,7 +290,7 @@ module cpu_register_file (
   endgenerate
 endmodule
 
-module cpu (
+module single_cycle_cpu (
     input wire clk,
     input wire rst_n,
 
@@ -320,7 +320,7 @@ module cpu (
   wire [2:0] funct3 = instr_data[14:12];
   wire [6:0] funct7 = instr_data[31:25];
 
-  cpu_control control (
+  scc_control control (
       .op(op),
       .funct3(funct3),
       .funct7(funct7),
@@ -335,7 +335,7 @@ module cpu (
       .reg_write(reg_write)
   );
 
-  cpu_branch_logic branch_logic (
+  scc_branch_logic branch_logic (
       .branch_type(branch_type),
       .funct3(funct3),
       .alu_zero(alu_zero),
@@ -347,7 +347,7 @@ module cpu (
 
   wire [31:0] imm_ext;
 
-  cpu_imm_extend imm_extend (
+  scc_imm_extend imm_extend (
       .data(instr_data[31:7]),
       .imm_src(imm_src),
       .imm_ext(imm_ext)
@@ -360,7 +360,7 @@ module cpu (
 
   wire [31:0] data_ext;
 
-  cpu_data_extend data_extend (
+  scc_data_extend data_extend (
       .data(data_rdata),
       .control(data_ext_control),
       .data_ext(data_ext)
@@ -379,7 +379,7 @@ module cpu (
     endcase
   end
 
-  cpu_register_file register_file (
+  scc_register_file register_file (
       .clk(clk),
       .rst_n(rst_n),
       .a1(instr_data[19:15]),
@@ -395,7 +395,7 @@ module cpu (
   assign data_addr  = alu_result;
   assign data_wdata = rd2;
 
-  cpu_alu alu (
+  scc_alu alu (
       .src_a  (rd1),
       .src_b  (alu_src == `ALU_SRC_IMM ? imm_ext : rd2),
       .control(alu_control),

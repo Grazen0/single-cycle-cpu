@@ -1,6 +1,6 @@
 `default_nettype none
 
-module top (
+module top_scc (
     input wire clk,
     input wire rst_n,
 
@@ -38,7 +38,7 @@ module top (
       .rdata(data_rdata)
   );
 
-  cpu c (
+  single_cycle_cpu cpu (
       .clk  (clk_out),
       .rst_n(rst_n),
 

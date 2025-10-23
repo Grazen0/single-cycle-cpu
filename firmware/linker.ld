@@ -1,30 +1,31 @@
 ENTRY(_start)
 
 MEMORY {
-  INSTR (rx) : ORIGIN = 0x00000000, LENGTH = 20K
-  DATA  (rw) : ORIGIN = 0x00000000, LENGTH = 20K
+  DATA (rwx) : ORIGIN = 0x00000000, LENGTH = 20K
 }
 
 SECTIONS {
-  . = 0x00000000;
-
   .text : {
     *(.text._start) /* Ensure _start at 0x0 */
     *(.text*)
+    *(.rodata*) 
+
+    . = ALIGN(4);
     _etext = .;
-  } > INSTR
+  } > DATA
 
-  . = _etext;
-
-  .data : AT(ORIGIN(INSTR) + LENGTH(INSTR)) {
+  .data : {
+    . = ALIGN(4);
     _sdata = .;
 
-    *(.rodata*) 
-    . = ALIGN(4);
     *(.data*)
 
     . = ALIGN(4);
     _edata = .;
+  } > DATA
+
+  .bss : {
+    . = ALIGN(4);
     _sbss = .;
 
     *(.bss*)

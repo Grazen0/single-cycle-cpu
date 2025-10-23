@@ -46,18 +46,30 @@ void lcd_print_sized(const char *s, const size_t size)
 
 void lcd_print_int(int n)
 {
-    static const size_t MAX_DIGITS = 10;
-
-    int digits[MAX_DIGITS];
-    size_t i = 0;
-
-    while (n != 0) {
-        digits[i] = n % 10;
-        n /= 10;
-        ++i;
+    if (n == 0) {
+        lcd_print_char('0');
+        return;
     }
 
     LCD_OPTS = LCD_WRITE_DATA;
+
+    long long value = n;
+
+    if (n < 0) {
+        value = -value;
+        lcd_send('-');
+    }
+
+    static const size_t MAX_DIGITS = 20;
+
+    uint8_t digits[MAX_DIGITS];
+    size_t i = 0;
+
+    while (value != 0) {
+        digits[i] = value % 10;
+        value /= 10;
+        ++i;
+    }
 
     for (int j = 0; j < i; ++j)
         lcd_send('0' + digits[i - 1 - j]);

@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps `default_nettype none
 
-module cpu_tb ();
+module single_cycle_cpu_tb ();
   reg clk, rst_n;
   always #5 clk = ~clk;
 
@@ -17,7 +17,7 @@ module cpu_tb ();
 
   always @(posedge clk or posedge rst_n) begin
     #1;
-    $display("pc = %h, x1 = %h, mem = %h %h %h %h", instr_addr, c.register_file.regs[1],
+    $display("pc = %h, x1 = %h, mem = %h %h %h %h", instr_addr, cpu.register_file.regs[1],
              ram.mem[0], ram.mem[1], ram.mem[2], ram.mem[3]);
   end
 
@@ -31,7 +31,7 @@ module cpu_tb ();
       .rdata(data_rdata)
   );
 
-  cpu c (
+  single_cycle_cpu cpu (
       .clk  (clk),
       .rst_n(rst_n),
 
@@ -45,7 +45,7 @@ module cpu_tb ();
   );
 
   initial begin
-    $dumpvars(0, cpu_tb);
+    $dumpvars(0, single_cycle_cpu_tb);
 
     clk   = 1;
     rst_n = 1;
