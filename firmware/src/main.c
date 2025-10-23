@@ -5,9 +5,6 @@
 
 void start(void)
 {
-    lcd_print("start\n");
-    lcd_print_int(532);
-
     init_heap();
 
     extern void __libc_init_array();
@@ -17,5 +14,6 @@ void start(void)
     lcd_send_instr(LcdInstr_ResetCursor);
     lcd_send_instr(LcdInstr_SetCursorOpts);
 
+    lcd_print("start\n");
     printf("Hello, world!");
 }
