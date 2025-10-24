@@ -66,16 +66,16 @@ module mcc_control (
 
   always @(*) begin
     branch_type = `BRANCH_NONE;
-    adr_src = `ADR_SRC_PC;
+    adr_src = 1'bx;
     mem_write = 4'b0000;
     ir_write = 0;
-    result_src = `RESULT_SRC_ALU_OUT;
+    result_src = 2'bxx;
     alu_control = 4'b0000;
-    alu_src_a = `ALU_SRC_A_PC;
-    alu_src_b = `ALU_SRC_B_RD2;
-    imm_src = `IMM_SRC_I;
+    alu_src_a = 2'bxx;
+    alu_src_b = 2'bxx;
+    imm_src = 3'bxxx;
     reg_write = 0;
-    data_ext_control = 3'b000;
+    data_ext_control = 3'bxxx;
 
     case (state)
       S_FETCH: begin
@@ -384,8 +384,8 @@ module mcc_alu (
       4'b0111: result = src_a & src_b;
       4'b1001: result = src_a;
       4'b1010: result = src_b;
-      4'b1111: result = 0;
-      default: result = 0;
+      4'b1111: result = {32{1'bx}};
+      default: result = {32{1'bx}};
     endcase
   end
 
@@ -538,21 +538,21 @@ module multi_cycle_cpu (
       `ALU_SRC_A_PC:     src_a = pc;
       `ALU_SRC_A_OLD_PC: src_a = old_pc;
       `ALU_SRC_A_RD1:    src_a = rd1_buf;
-      default:           src_a = 0;
+      default:           src_a = {32{1'bx}};
     endcase
 
     case (alu_src_b)
       `ALU_SRC_B_RD2: src_b = rd2_buf;
       `ALU_SRC_B_IMM: src_b = imm_ext;
       `ALU_SRC_B_4: src_b = 4;
-      default: src_b = 0;
+      default: src_b = {32{1'bx}};
     endcase
 
     case (result_src)
       `RESULT_SRC_ALU_OUT:    result = alu_out;
       `RESULT_SRC_DATA:       result = data_ext;
       `RESULT_SRC_ALU_RESULT: result = alu_result;
-      default:                result = 0;
+      default:                result = {32{1'bx}};
     endcase
   end
 
@@ -581,4 +581,10 @@ module multi_cycle_cpu (
 
   assign mem_addr  = adr_src == `ADR_SRC_PC ? pc : result;
   assign mem_wdata = rd2_buf;
+
+  // always @(posedge clk) begin
+  //   if (adr_src == `ADR_SRC_RESULT && |mem_wenable)
+  //     $display("STORE addr=%h wdata=%h", alu_out, rd2_buf);
+  //   else if (adr_src == `ADR_SRC_RESULT) $display("LOAD  addr=%h -> %h", alu_out, mem_rdata);
+  // end
 endmodule

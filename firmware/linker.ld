@@ -29,6 +29,7 @@ SECTIONS {
     _sbss = .;
 
     *(.bss*)
+    *(.sbss*)
     *(COMMON)
 
     . = ALIGN(4);

@@ -45,7 +45,7 @@ $(BUILD_DIR)/%.hex: $(BUILD_DIR)/%.bin
 	$(XXD) -p -c4 -e $< | awk '{print $$2}' > $@
 
 $(BUILD_DIR)/$(TARGET_BIN): $(BUILD_DIR)/$(TARGET_EXEC)
-	$(OBJCOPY) -O binary $< $@
+	$(OBJCOPY) -O binary --set-section-flags .bss=alloc,load,contents $< $@
 
 $(BUILD_DIR)/$(TARGET_INSTR_BIN): $(BUILD_DIR)/$(TARGET_EXEC)
 	$(OBJCOPY) -O binary --only-section=.text $< $@

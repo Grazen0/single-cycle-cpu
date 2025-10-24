@@ -27,7 +27,7 @@ module top_mcc (
 
       .addr(mem_addr),
       .wdata(mem_wdata),
-      .wenable(mem_wenable),
+      .wenable(mem_wenable & {4{~mem_addr[31]}}),
 
       .rdata(mem_rdata)
   );

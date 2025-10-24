@@ -28,7 +28,7 @@ module top_mcc_tb ();
     rst_n = 0;
     #1 rst_n = 1;
 
-    #100000;
+    #1000000;
     $display("");
     $display("");
     $finish();

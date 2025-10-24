@@ -9,7 +9,7 @@
 static const uint8_t LCD_WRITE_INSTR = 0b00;
 static const uint8_t LCD_WRITE_DATA = 0b10;
 
-static inline void lcd_send(const uint8_t data)
+static void lcd_send(const uint8_t data)
 {
     LCD_DATA = data;
     LCD_ENABLE = 1;
@@ -51,26 +51,34 @@ void lcd_print_int(int n)
         return;
     }
 
-    LCD_OPTS = LCD_WRITE_DATA;
-
-    long long value = n;
-
-    if (n < 0) {
-        value = -value;
-        lcd_send('-');
-    }
-
-    static const size_t MAX_DIGITS = 20;
+    static const size_t MAX_DIGITS = 10;
+    int negative = n < 0;
+    int value = negative ? -n : n;
 
     uint8_t digits[MAX_DIGITS];
-    size_t i = 0;
+    size_t i = MAX_DIGITS;
 
     while (value != 0) {
+        --i;
         digits[i] = value % 10;
         value /= 10;
-        ++i;
     }
 
-    for (int j = 0; j < i; ++j)
-        lcd_send('0' + digits[i - 1 - j]);
+    LCD_OPTS = LCD_WRITE_DATA;
+
+    if (negative)
+        lcd_send('-');
+
+    for (size_t j = i; j < MAX_DIGITS; ++j)
+        lcd_send('0' + digits[j]);
+}
+
+void lcd_print_hex(uint32_t n)
+{
+    LCD_OPTS = LCD_WRITE_DATA;
+
+    for (size_t i = 0; i < 8; ++i) {
+        uint8_t nib = (n >> (4 * (7 - i))) & 0xF;
+        lcd_send(nib < 10 ? '0' + nib : 'A' + (nib - 10));
+    }
 }

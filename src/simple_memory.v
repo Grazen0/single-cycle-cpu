@@ -21,16 +21,14 @@ module simple_memory #(
   always @(*) begin
     wvalue = mem[word_addr];
 
-    if (wenable[0]) wvalue[7:0] = wdata[7:0];
-    if (wenable[1]) wvalue[15:8] = wdata[15:8];
-    if (wenable[2]) wvalue[23:16] = wdata[23:16];
-    if (wenable[3]) wvalue[31:24] = wdata[31:24];
+    if (wenable[0]) wvalue[7+(8*offset)-:8] = wdata[7:0];
+    if (wenable[1]) wvalue[15+(8*offset)-:8] = wdata[15:8];
+    if (wenable[2]) wvalue[23+(8*offset)-:8] = wdata[23:16];
+    if (wenable[3]) wvalue[31+(8*offset)-:8] = wdata[31:24];
   end
 
   always @(posedge clk) begin
-    if (|wenable) begin
-      mem[word_addr] <= wvalue;
-    end
+    if (|wenable) mem[word_addr] <= wvalue;
   end
 
   assign rdata = mem[word_addr] >> (8 * offset);

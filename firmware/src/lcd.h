@@ -20,4 +20,6 @@ void lcd_print_sized(const char *s, size_t size);
 
 void lcd_print_int(int n);
 
+void lcd_print_hex(uint32_t n);
+
 #endif
