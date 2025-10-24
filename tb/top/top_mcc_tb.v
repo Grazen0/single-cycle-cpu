@@ -1,4 +1,4 @@
-`timescale 1ns / 1ps `default_nettype none
+`timescale 1ns / 1ns `default_nettype none
 
 module top_mcc_tb ();
   reg clk, rst_n;

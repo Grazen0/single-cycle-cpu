@@ -20,22 +20,19 @@ module top_scc (
   wire [31:0] instr_data;
   wire [31:0] instr_addr;
 
-  simple_rom rom (
-      .addr(instr_addr),
-      .data(instr_data)
-  );
-
   wire [31:0] data_addr, data_wdata, data_rdata;
   wire [3:0] data_wenable;
 
-  simple_ram ram (
+  dual_memory memory (
       .clk(clk_out),
 
-      .addr(data_addr),
-      .wdata(data_wdata),
-      .wenable(data_wenable & {4{~data_addr[31]}}),
+      .addr_1(data_addr),
+      .rdata_1(data_rdata),
+      .wdata_1(data_wdata),
+      .wenable_1(data_wenable & {4{~data_addr[31]}}),
 
-      .rdata(data_rdata)
+      .addr_2 (instr_addr),
+      .rdata_2(instr_data)
   );
 
   single_cycle_cpu cpu (

@@ -15,8 +15,7 @@ IVERILOG_FLAGS := $(INC_FLAGS)
 DATA_DIR := ./data
 FIRMWARE_DIR := firmware
 
-FIRMWARE_INSTR_HEX = firmware_instr.hex
-FIRMWARE_DATA_HEX = firmware_data.hex
+FIRMWARE_HEX = firmware.hex
 
 .PHONY: clean run wave firmware
 
@@ -39,7 +38,7 @@ $(DATA_DIR)/%.hex: FORCE
 		cp $(FIRMWARE_DIR)/build/*.hex $(DATA_DIR); \
 	fi
 
-$(BUILD_DIR)/%: $(TB_DIR)/%.v $(SRCS) $(DATA_DIR)/$(FIRMWARE_INSTR_HEX) $(DATA_DIR)/$(FIRMWARE_DATA_HEX)
+$(BUILD_DIR)/%: $(TB_DIR)/%.v $(SRCS) $(DATA_DIR)/$(FIRMWARE_HEX)
 	mkdir -p $(dir $@)
 	iverilog $(IVERILOG_FLAGS) -o $@ $< $(SRCS) 
 

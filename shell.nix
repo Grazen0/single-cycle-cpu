@@ -3,10 +3,11 @@
 
   riscvPackages,
 
+  bear,
+  glibc_multi,
   gtkwave,
   iverilog,
   xxd,
-  bear,
 }:
 mkShell {
   hardeningDisable = [
@@ -15,18 +16,14 @@ mkShell {
   ];
 
   packages = [
+    bear
+    glibc_multi
     gtkwave
     iverilog
     xxd
-    bear
 
-    riscvPackages.binutils
-    riscvPackages.gcc
-    (riscvPackages.newlib-nano.overrideAttrs (oldAttrs: {
-      nativeBuildInputs = (oldAttrs.nativeBuildInputs or [ ]) ++ [
-        riscvPackages.gcc
-        riscvPackages.binutils
-      ];
-    }))
+    riscvPackages.buildPackages.binutils
+    riscvPackages.buildPackages.gcc
+    riscvPackages.newlib-nano
   ];
 }

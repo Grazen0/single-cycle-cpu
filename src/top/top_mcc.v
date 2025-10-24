@@ -22,14 +22,14 @@ module top_mcc (
   wire [31:0] mem_wdata;
   wire [ 3:0] mem_wenable;
 
-  simple_memory mem (
+  dual_memory memory (
       .clk(clk),
 
-      .addr(mem_addr),
-      .wdata(mem_wdata),
-      .wenable(mem_wenable & {4{~mem_addr[31]}}),
+      .addr_1(mem_addr),
+      .wdata_1(mem_wdata),
+      .wenable_1(mem_wenable & {4{~mem_addr[31]}}),
 
-      .rdata(mem_rdata)
+      .rdata_1(mem_rdata)
   );
 
   multi_cycle_cpu cpu (
@@ -61,6 +61,7 @@ module top_mcc (
   always @(negedge lcd_enable) begin
     if (lcd_ctrl == 2'b10) begin
       $write("%c", lcd_data);
+      $fflush();
     end
   end
 

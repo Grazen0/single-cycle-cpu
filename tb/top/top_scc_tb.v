@@ -1,4 +1,4 @@
-`timescale 1ns / 1ps `default_nettype none
+`timescale 1ns / 1ns `default_nettype none
 
 module top_scc_tb ();
   reg clk, rst_n;
@@ -27,8 +27,6 @@ module top_scc_tb ();
 
   initial begin
     $dumpvars(0, top_scc_tb);
-    $dumpvars(0, top_scc_tb.top.cpu.register_file.regs[10]);
-    $dumpvars(0, top_scc_tb.top.cpu.register_file.regs[15]);
 
     $display("");
 
@@ -36,7 +34,7 @@ module top_scc_tb ();
     rst_n = 0;
     #1 rst_n = 1;
 
-    #10000;
+    #1000000;
     $display("");
     $display("");
     $finish();

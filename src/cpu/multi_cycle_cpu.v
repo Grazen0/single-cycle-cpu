@@ -277,139 +277,6 @@ module mcc_branch_logic (
   end
 endmodule
 
-module mcc_imm_extend (
-    input  wire [24:0] data,
-    input  wire [ 2:0] imm_src,
-    output reg  [31:0] imm_ext
-);
-  wire [11:0] imm_i = data[24:13];
-  wire [11:0] imm_s = {data[24:18], data[4:0]};
-  wire [12:0] imm_b = {data[24], data[0], data[23:18], data[4:1], 1'b0};
-  wire [31:0] imm_u = {data[24:5], {12{1'b0}}};
-  wire [20:0] imm_j = {data[24], data[12:5], data[13], data[23:14], 1'b0};
-
-  always @(*) begin
-    case (imm_src)
-      `IMM_SRC_I: imm_ext = {{20{imm_i[11]}}, imm_i};
-      `IMM_SRC_S: imm_ext = {{20{imm_s[11]}}, imm_s};
-      `IMM_SRC_B: imm_ext = {{19{imm_b[12]}}, imm_b};
-      `IMM_SRC_U: imm_ext = imm_u;
-      `IMM_SRC_J: imm_ext = {{11{imm_j[20]}}, imm_j};
-      default: imm_ext = 0;
-    endcase
-  end
-endmodule
-
-module mcc_register_file (
-    input wire clk,
-    input wire rst_n,
-    input wire [4:0] a1,
-    input wire [4:0] a2,
-    input wire [4:0] a3,
-    input wire [31:0] wd3,
-    input wire we3,
-
-    output wire [31:0] rd1,
-    output wire [31:0] rd2
-);
-  localparam REGS_SIZE = 32;
-
-  reg [31:0] regs[0:REGS_SIZE-1];
-
-  integer i;
-
-  always @(posedge clk or negedge rst_n) begin
-    if (!rst_n) begin
-      // Reset registers
-      for (i = 0; i < REGS_SIZE; i = i + 1) begin
-        regs[i] <= 0;
-      end
-    end else begin
-      if (we3 && a3 != 0) begin
-        regs[a3] <= wd3;
-      end
-    end
-  end
-
-  assign rd1 = (a1 == 0) ? 0 : regs[a1];
-  assign rd2 = (a2 == 0) ? 0 : regs[a2];
-
-  generate
-    genvar idx;
-    for (idx = 0; idx < 32; idx = idx + 1) begin : g_register
-      wire [31:0] val = regs[idx];
-    end
-  endgenerate
-endmodule
-
-module mcc_alu (
-    input wire [31:0] src_a,
-    input wire [31:0] src_b,
-    input wire [ 3:0] control,
-
-    output reg signed [31:0] result,
-    output reg carry,
-    output reg borrow,
-    output wire zero,
-    output reg overflow,
-    output wire neg,
-    output reg lt
-);
-  wire signed [31:0] src_a_signed = src_a;
-  wire signed [31:0] src_b_signed = src_b;
-
-  wire [4:0] shamt = src_b[4:0];
-
-  always @(*) begin
-    carry    = 0;
-    borrow   = 0;
-    overflow = 0;
-    lt       = 0;
-
-    casez (control)
-      4'b0000: {carry, result} = {1'b0, src_a} + {1'b0, src_b};
-      4'b1000: begin
-        {carry, result} = {1'b1, src_a} - {1'b0, src_b};
-        borrow = ~carry;
-        overflow = (src_a[31] != src_b[31]) && (result[31] != src_a[31]);
-        lt = (result[31] ^ overflow);
-      end
-      4'b0001: result = src_a << shamt;
-      4'b0010: result = {31'b0, src_a_signed < src_b_signed};
-      4'b0011: result = {31'b0, src_a < src_b};
-      4'b0100: result = src_a ^ src_b;
-      4'b0101: result = src_a >> shamt;
-      4'b1101: result = src_a_signed >>> shamt;
-      4'b0110: result = src_a | src_b;
-      4'b0111: result = src_a & src_b;
-      4'b1001: result = src_a;
-      4'b1010: result = src_b;
-      4'b1111: result = {32{1'bx}};
-      default: result = {32{1'bx}};
-    endcase
-  end
-
-  assign zero = (result == 0);
-  assign neg  = result[31];
-endmodule
-
-module mcc_data_extend (
-    input  wire [31:0] data,
-    input  wire [ 2:0] control,
-    output reg  [31:0] data_ext
-);
-  always @(*) begin
-    case (control)
-      3'b000:  data_ext = {{24{data[7]}}, data[7:0]};
-      3'b001:  data_ext = {{16{data[15]}}, data[15:0]};
-      3'b010:  data_ext = data;
-      3'b100:  data_ext = {{24{1'b0}}, data[7:0]};
-      3'b101:  data_ext = {{16{1'b0}}, data[15:0]};
-      default: data_ext = 32'b0;
-    endcase
-  end
-endmodule
-
 module multi_cycle_cpu (
     input wire clk,
     input wire rst_n,
@@ -478,7 +345,7 @@ module multi_cycle_cpu (
 
   wire [31:0] imm_ext;
 
-  mcc_imm_extend imm_extend (
+  cpu_imm_extend imm_extend (
       .data(instr[31:7]),
       .imm_src(imm_src),
       .imm_ext(imm_ext)
@@ -486,7 +353,7 @@ module multi_cycle_cpu (
 
   wire [31:0] data_ext;
 
-  mcc_data_extend data_extend (
+  cpu_data_extend data_extend (
       .data(data),
       .control(data_ext_control),
       .data_ext(data_ext)
@@ -496,7 +363,7 @@ module multi_cycle_cpu (
   wire [31:0] rd2;
 
 
-  mcc_register_file register_file (
+  cpu_register_file register_file (
       .clk  (clk),
       .rst_n(rst_n),
 
@@ -519,7 +386,7 @@ module multi_cycle_cpu (
 
   wire [31:0] alu_result;
 
-  mcc_alu alu (
+  cpu_alu alu (
       .src_a  (src_a),
       .src_b  (src_b),
       .control(alu_control),
@@ -581,10 +448,4 @@ module multi_cycle_cpu (
 
   assign mem_addr  = adr_src == `ADR_SRC_PC ? pc : result;
   assign mem_wdata = rd2_buf;
-
-  // always @(posedge clk) begin
-  //   if (adr_src == `ADR_SRC_RESULT && |mem_wenable)
-  //     $display("STORE addr=%h wdata=%h", alu_out, rd2_buf);
-  //   else if (adr_src == `ADR_SRC_RESULT) $display("LOAD  addr=%h -> %h", alu_out, mem_rdata);
-  // end
 endmodule

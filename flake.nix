@@ -1,7 +1,6 @@
 {
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
-    nixpkgs-old.url = "github:nixos/nixpkgs?ref=facbbae4b7cb818569024a7bd1dbddf1bbdd4c35";
     flake-parts.url = "github:hercules-ci/flake-parts";
     systems.url = "github:nix-systems/default";
   };
@@ -10,7 +9,6 @@
     inputs@{
       self,
       nixpkgs,
-      nixpkgs-old,
       flake-parts,
       ...
     }:
@@ -25,7 +23,7 @@
           ...
         }:
         let
-          riscvCross = import nixpkgs-old {
+          riscvPackages = import nixpkgs {
             inherit system;
             crossSystem = {
               config = "riscv32-none-elf";
@@ -39,9 +37,7 @@
           };
         in
         {
-          devShells.default = pkgs.callPackage ./shell.nix {
-            riscvPackages = riscvCross.buildPackages;
-          };
+          devShells.default = pkgs.callPackage ./shell.nix { inherit riscvPackages; };
         };
     };
 }

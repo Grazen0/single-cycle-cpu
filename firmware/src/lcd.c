@@ -6,8 +6,8 @@
 #define LCD_OPTS (*(volatile uint8_t *)0x80000001)
 #define LCD_ENABLE (*(volatile uint8_t *)0x80000002)
 
-static const uint8_t LCD_WRITE_INSTR = 0b00;
-static const uint8_t LCD_WRITE_DATA = 0b10;
+static constexpr uint8_t LCD_WRITE_INSTR = 0b00;
+static constexpr uint8_t LCD_WRITE_DATA = 0b10;
 
 static void lcd_send(const uint8_t data)
 {
@@ -51,9 +51,9 @@ void lcd_print_int(int n)
         return;
     }
 
-    static const size_t MAX_DIGITS = 10;
-    int negative = n < 0;
-    int value = negative ? -n : n;
+    static constexpr size_t MAX_DIGITS = 10;
+    const bool negative = n < 0;
+    long long value = negative ? -n : n;
 
     uint8_t digits[MAX_DIGITS];
     size_t i = MAX_DIGITS;
@@ -78,7 +78,7 @@ void lcd_print_hex(uint32_t n)
     LCD_OPTS = LCD_WRITE_DATA;
 
     for (size_t i = 0; i < 8; ++i) {
-        uint8_t nib = (n >> (4 * (7 - i))) & 0xF;
+        const uint8_t nib = (n >> (4 * (7 - i))) & 0xF;
         lcd_send(nib < 10 ? '0' + nib : 'A' + (nib - 10));
     }
 }
