@@ -21,7 +21,7 @@ void lcd_print_char(char c);
 
 void lcd_print(const char *s);
 
-void lcd_print_sized(const char *s, size_t size);
+void lcd_print_n(const char *s, size_t size);
 
 void lcd_print_int(int n);
 

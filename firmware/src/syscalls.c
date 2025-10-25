@@ -77,6 +77,6 @@ char *_sbrk(const int incr)
 
 int _write(const int file, char *const ptr, const int len)
 {
-    lcd_print_sized(ptr, len);
+    lcd_print_n(ptr, len);
     return len;
 }

@@ -36,11 +36,11 @@ void lcd_print(const char *restrict s)
         lcd_send(*s++);
 }
 
-void lcd_print_sized(const char *s, const size_t size)
+void lcd_print_n(const char *s, const size_t n)
 {
     LCD_OPTS = LCD_WRITE_DATA;
 
-    for (size_t i = 0; i < size; ++i)
+    for (size_t i = 0; i < n; ++i)
         lcd_send(*s++);
 }
 
