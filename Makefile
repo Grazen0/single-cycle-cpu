@@ -7,7 +7,7 @@ TBS = $(shell find $(TB_DIR) -name '*.v')
 
 TARGETS := $(patsubst $(TB_DIR)/%.v,$(BUILD_DIR)/%,$(TBS))
 
-INC_DIRS := ./include
+INC_DIRS := $(shell find ./include -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 IVERILOG_FLAGS := $(INC_FLAGS) 

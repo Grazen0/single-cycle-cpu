@@ -1,10 +1,5 @@
 `default_nettype none
-
-`define IMM_SRC_I 3'd0
-`define IMM_SRC_S 3'd1
-`define IMM_SRC_B 3'd2
-`define IMM_SRC_U 3'd3
-`define IMM_SRC_J 3'd4
+`include "cpu_imm_extend.vh"
 
 `define ALU_SRC_A_PC 2'd0
 `define ALU_SRC_A_OLD_PC 2'd1
@@ -17,7 +12,6 @@
 `define RESULT_SRC_ALU_OUT 2'd0
 `define RESULT_SRC_DATA 2'd1
 `define RESULT_SRC_ALU_RESULT 2'd2
-`define RESULT_SRC_IMM 2'd3
 
 `define ADR_SRC_PC 1'd0
 `define ADR_SRC_RESULT 1'd1
@@ -171,14 +165,15 @@ module mcc_control (
             next_state  = S_FETCH;
           end
           OP_JALR: begin
-            alu_src_a   = `ALU_SRC_A_RD1;
-            alu_src_b   = `ALU_SRC_B_IMM;
+            imm_src = `IMM_SRC_J;
+            alu_src_a = `ALU_SRC_A_RD1;
+            alu_src_b = `ALU_SRC_B_IMM;
             alu_control = 4'b0000;  // add
 
             branch_type = `BRANCH_NEXT;
-            result_src  = `RESULT_SRC_ALU_RESULT;
+            result_src = `RESULT_SRC_ALU_RESULT;
 
-            next_state  = S_WRITE;
+            next_state = S_WRITE;
           end
           OP_JAL: begin
             branch_type = `BRANCH_NEXT;
@@ -411,8 +406,8 @@ module multi_cycle_cpu (
     case (alu_src_b)
       `ALU_SRC_B_RD2: src_b = rd2_buf;
       `ALU_SRC_B_IMM: src_b = imm_ext;
-      `ALU_SRC_B_4: src_b = 4;
-      default: src_b = {32{1'bx}};
+      `ALU_SRC_B_4:   src_b = 4;
+      default:        src_b = {32{1'bx}};
     endcase
 
     case (result_src)
