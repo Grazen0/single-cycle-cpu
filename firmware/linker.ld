@@ -15,7 +15,6 @@ SECTIONS {
     *(.rodata.*) 
     KEEP(*(.init))
     KEEP(*(.fini))
-    *(.eh_frame)
 
     . = ALIGN(4);
     _etext = .;
