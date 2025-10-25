@@ -1,3 +1,5 @@
+`default_nettype none
+
 module clk_divider #(
     parameter PERIOD = 2
 ) (
