@@ -12,7 +12,7 @@ module cpu_data_extend (
       3'b010:  data_ext = data;
       3'b100:  data_ext = {{24{1'b0}}, data[7:0]};
       3'b101:  data_ext = {{16{1'b0}}, data[15:0]};
-      default: data_ext = 32'b0;
+      default: data_ext = {32{1'bx}};
     endcase
   end
 endmodule
