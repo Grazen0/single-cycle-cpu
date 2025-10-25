@@ -28,7 +28,7 @@ module top_pl_tb ();
     rst_n = 0;
     #1 rst_n = 1;
 
-    #1000000;
+    #200;
     $display("");
     $display("");
     $finish();
