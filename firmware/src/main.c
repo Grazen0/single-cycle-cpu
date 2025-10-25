@@ -12,5 +12,5 @@ void start(void)
     int *arr_2 = malloc(sizeof(*arr_2) * 8);
     int *arr_3 = malloc(sizeof(*arr_3) * 2);
 
-    lcd_print_sized("Hello, world!\n", 8);
+    lcd_print("Hello, world!");
 }

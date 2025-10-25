@@ -1,5 +1,6 @@
 `default_nettype none
 `include "cpu_imm_extend.vh"
+`include "cpu_alu.vh"
 
 `define ALU_SRC_RD 1'b0
 `define ALU_SRC_IMM 1'b1
@@ -51,7 +52,7 @@ module scc_control (
       7'b0000011: begin  // load
         imm_src = `IMM_SRC_I;
         alu_src = `ALU_SRC_IMM;
-        alu_control = 4'b0000;  // add
+        alu_control = `ALU_ADD;
         result_src = `RESULT_SRC_DATA;
         reg_write = 1;
         data_ext_control = funct3;
@@ -71,7 +72,7 @@ module scc_control (
       7'b0100011: begin  // store
         imm_src = `IMM_SRC_S;
         alu_src = `ALU_SRC_IMM;
-        alu_control = 4'b0000;  // add
+        alu_control = `ALU_ADD;
 
         case (funct3)
           3'b000:  mem_write = 4'b0001;
@@ -93,13 +94,13 @@ module scc_control (
       7'b1100011: begin  // branch instructions
         imm_src = `IMM_SRC_B;
         alu_src = `ALU_SRC_RD;
-        alu_control = 4'b1000;  // sub
+        alu_control = `ALU_SUB;
         branch_type = `BRANCH_COND;
       end
       7'b1100111: begin  // jalr
         imm_src = `IMM_SRC_I;
         alu_src = `ALU_SRC_IMM;
-        alu_control = 4'b0000;  // add
+        alu_control = `ALU_ADD;
         branch_type = `BRANCH_JALR;
 
         result_src = `RESULT_SRC_PC_STEP;

@@ -1,5 +1,6 @@
 `default_nettype none
 `include "cpu_imm_extend.vh"
+`include "cpu_alu.vh"
 
 `define ALU_SRC_A_PC 2'd0
 `define ALU_SRC_A_OLD_PC 2'd1
@@ -80,7 +81,7 @@ module mcc_control (
 
         alu_src_a = `ALU_SRC_A_PC;
         alu_src_b = `ALU_SRC_B_4;
-        alu_control = 4'b0000;  // add
+        alu_control = `ALU_ADD;
         result_src = `RESULT_SRC_ALU_RESULT;
 
         next_state = S_DECODE;
@@ -91,19 +92,19 @@ module mcc_control (
           imm_src = `IMM_SRC_B;
           alu_src_a = `ALU_SRC_A_OLD_PC;
           alu_src_b = `ALU_SRC_B_IMM;
-          alu_control = 4'b0000;  // add
+          alu_control = `ALU_ADD;
         end else if (op == OP_AUIPC) begin
           // Pre-calculate resulting PC
           imm_src = `IMM_SRC_U;
           alu_src_a = `ALU_SRC_A_OLD_PC;
           alu_src_b = `ALU_SRC_B_IMM;
-          alu_control = 4'b0000;  // add
+          alu_control = `ALU_ADD;
         end else if (op == OP_JAL) begin
           // Pre-calculate branch target PC
           imm_src = `IMM_SRC_J;
           alu_src_a = `ALU_SRC_A_OLD_PC;
           alu_src_b = `ALU_SRC_B_IMM;
-          alu_control = 4'b0000;  // add
+          alu_control = `ALU_ADD;
         end
 
         next_state = S_EXECUTE;
@@ -114,7 +115,7 @@ module mcc_control (
             imm_src = `IMM_SRC_I;
             alu_src_a = `ALU_SRC_A_RD1;
             alu_src_b = `ALU_SRC_B_IMM;
-            alu_control = 4'b0000;  // add
+            alu_control = `ALU_ADD;
 
             next_state = S_MEM_READ;
           end
@@ -136,7 +137,7 @@ module mcc_control (
             imm_src = `IMM_SRC_S;
             alu_src_a = `ALU_SRC_A_RD1;
             alu_src_b = `ALU_SRC_B_IMM;
-            alu_control = 4'b0000;  // add
+            alu_control = `ALU_ADD;
 
             next_state = S_WRITE;
           end
@@ -150,14 +151,14 @@ module mcc_control (
           OP_LUI: begin
             imm_src = `IMM_SRC_U;
             alu_src_b = `ALU_SRC_B_IMM;
-            alu_control = 4'b1010;  // pass B
+            alu_control = `ALU_PASS_B;
 
             next_state = S_WRITE;
           end
           OP_BRANCH: begin
             alu_src_a   = `ALU_SRC_A_RD1;
             alu_src_b   = `ALU_SRC_B_RD2;
-            alu_control = 4'b1000;  // sub
+            alu_control = `ALU_SUB;
 
             branch_type = `BRANCH_COND;
             result_src  = `RESULT_SRC_ALU_OUT;
@@ -168,7 +169,7 @@ module mcc_control (
             imm_src = `IMM_SRC_J;
             alu_src_a = `ALU_SRC_A_RD1;
             alu_src_b = `ALU_SRC_B_IMM;
-            alu_control = 4'b0000;  // add
+            alu_control = `ALU_ADD;
 
             branch_type = `BRANCH_NEXT;
             result_src = `RESULT_SRC_ALU_RESULT;
@@ -219,7 +220,7 @@ module mcc_control (
           OP_JALR, OP_JAL: begin
             alu_src_a   = `ALU_SRC_A_OLD_PC;
             alu_src_b   = `ALU_SRC_B_4;
-            alu_control = 4'b0000;  // add
+            alu_control = `ALU_ADD;
 
             result_src  = `RESULT_SRC_ALU_RESULT;
             reg_write   = 1;
