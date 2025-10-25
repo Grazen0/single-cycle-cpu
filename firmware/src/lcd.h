@@ -4,11 +4,16 @@
 #include <stddef.h>
 #include <stdint.h>
 
-typedef enum LcdInstr {
-    LcdInstr_Clear = 0x1, // 0b0000'0001
-    LcdInstr_ResetCursor = 0x2, // 0b0000'0010
-    LcdInstr_SetCursorOpts = 0xF, // 0b0000'FFFF
+typedef enum LcdInstr : uint8_t {
+    LCD_CLEAR = 0b0000'0001,
+    LCD_RETURN_HOME = 0b0000'0010,
 } LcdInstr;
+
+#define LCD_DISPLAY_CONTROL(opts) ((LcdInstr)(0b1000 | opts))
+
+#define LCD_DC_DISPLAY 0b100
+#define LCD_DC_CURSOR 0b010
+#define LCD_DC_BLINK 0b001
 
 void lcd_send_instr(LcdInstr instr);
 
