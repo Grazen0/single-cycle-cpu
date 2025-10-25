@@ -1,5 +1,6 @@
 `default_nettype none
 `include "cpu_imm_extend.vh"
+`include "cpu_alu.vh"
 
 `define ALU_SRC_RD 1'b0
 `define ALU_SRC_IMM 1'b1
@@ -9,11 +10,10 @@
 `define PC_SRC_ALU 2'd2
 `define PC_SRC_CURRENT 2'd3
 
-`define RESULT_SRC_ALU 3'd0
-`define RESULT_SRC_DATA 3'd1
-`define RESULT_SRC_IMM 3'd2
-`define RESULT_SRC_PC_TARGET 3'd3
-`define RESULT_SRC_PC_STEP 3'd4
+`define RESULT_SRC_ALU 2'd0
+`define RESULT_SRC_DATA 2'd1
+`define RESULT_SRC_PC_TARGET 2'd2
+`define RESULT_SRC_PC_STEP 2'd3
 
 `define BRANCH_NONE 3'd0
 `define BRANCH_JALR 3'd1
@@ -30,7 +30,7 @@ module pl_control (
     input wire alu_borrow,
 
     output reg [2:0] branch_type,
-    output reg [2:0] result_src,
+    output reg [1:0] result_src,
     output reg [2:0] data_ext_control,
     output reg [3:0] mem_write,
     output reg [3:0] alu_control,
@@ -51,7 +51,7 @@ module pl_control (
       7'b0000011: begin  // load
         imm_src = `IMM_SRC_I;
         alu_src = `ALU_SRC_IMM;
-        alu_control = 4'b0000;  // add
+        alu_control = `ALU_ADD;
         result_src = `RESULT_SRC_DATA;
         reg_write = 1;
         data_ext_control = funct3;
@@ -71,7 +71,8 @@ module pl_control (
       7'b0100011: begin  // store
         imm_src = `IMM_SRC_S;
         alu_src = `ALU_SRC_IMM;
-        alu_control = 4'b0000;  // add
+        alu_control = `ALU_ADD;
+        result_src = `RESULT_SRC_ALU;
 
         case (funct3)
           3'b000:  mem_write = 4'b0001;
@@ -83,23 +84,26 @@ module pl_control (
       7'b0110011: begin  // alu (registers)
         alu_src = `ALU_SRC_RD;
         alu_control = {funct7[5], funct3};
+        result_src = `RESULT_SRC_ALU;
         reg_write = 1;
       end
       7'b0110111: begin  // lui
         imm_src = `IMM_SRC_U;
-        result_src = `RESULT_SRC_IMM;
+        alu_src = `ALU_SRC_IMM;
+        alu_control = `ALU_PASS_B;
+        result_src = `RESULT_SRC_ALU;
         reg_write = 1;
       end
       7'b1100011: begin  // branch instructions
         imm_src = `IMM_SRC_B;
         alu_src = `ALU_SRC_RD;
-        alu_control = 4'b1000;  // sub
+        alu_control = `ALU_SUB;
         branch_type = `BRANCH_COND;
       end
       7'b1100111: begin  // jalr
         imm_src = `IMM_SRC_I;
         alu_src = `ALU_SRC_IMM;
-        alu_control = 4'b0000;  // add
+        alu_control = `ALU_ADD;
         branch_type = `BRANCH_JALR;
 
         result_src = `RESULT_SRC_PC_STEP;
@@ -113,7 +117,7 @@ module pl_control (
         reg_write = 1;
       end
       default: begin
-        $display("Unknown op: %h", op);
+        // $display("Unknown op: %h", op);
         branch_type = `BRANCH_BREAK;
       end
     endcase
@@ -136,6 +140,8 @@ module pl_branch_logic (
       `BRANCH_JAL: pc_src = `PC_SRC_JUMP;
       `BRANCH_BREAK: pc_src = `PC_SRC_CURRENT;
       `BRANCH_COND: begin
+        pc_src = `PC_SRC_STEP;
+
         case (funct3)
           3'b000:  if (alu_zero) pc_src = `PC_SRC_JUMP;  // beq
           3'b001:  if (!alu_zero) pc_src = `PC_SRC_JUMP;  // bne
@@ -168,10 +174,13 @@ module pl_hazard_unit (
     input wire [4:0] rs1_d,
     input wire [4:0] rs2_d,
     input wire [4:0] rd_e,
-    input wire [2:0] result_src_e,
+    input wire [1:0] result_src_e,
     output wire stall_f,
     output wire stall_d,
-    output wire flush_e
+    output wire flush_e,
+
+    input wire [1:0] pc_src_e,
+    output wire flush_d
 );
   wire lw_stall = result_src_e == `RESULT_SRC_DATA && (rs1_d == rd_e || rs2_d == rd_e);
 
@@ -194,7 +203,8 @@ module pl_hazard_unit (
 
   assign stall_f = lw_stall;
   assign stall_d = lw_stall;
-  assign flush_e = lw_stall;
+  assign flush_d = pc_src_e != `PC_SRC_STEP;
+  assign flush_e = lw_stall || pc_src_e != `PC_SRC_STEP;
 endmodule
 
 module pipelined_cpu (
@@ -214,6 +224,7 @@ module pipelined_cpu (
   wire stall_f;
   wire stall_d;
   wire flush_e;
+  wire flush_d;
 
   pl_hazard_unit hazard_unit (
       .rs1_e(rs1_e),
@@ -231,7 +242,10 @@ module pipelined_cpu (
       .result_src_e(result_src_e),
       .stall_f(stall_f),
       .stall_d(stall_d),
-      .flush_e(flush_e)
+      .flush_e(flush_e),
+
+      .pc_src_e(pc_src_e),
+      .flush_d (flush_d)
   );
 
   // 1. Fetch
@@ -251,7 +265,7 @@ module pipelined_cpu (
     case (pc_src_e)
       `PC_SRC_STEP:    pc_next = pc_plus_4_f;
       `PC_SRC_JUMP:    pc_next = pc_target_e;
-      `PC_SRC_ALU:     pc_next = alu_result_e[31:1] & ~1;
+      `PC_SRC_ALU:     pc_next = alu_result_e & ~1;
       `PC_SRC_CURRENT: pc_next = pc_f;
       default:         pc_next = {32{1'bx}};
     endcase
@@ -266,7 +280,7 @@ module pipelined_cpu (
   reg  [31:0] pc_plus_4_d;
 
   always @(posedge clk or negedge rst_n) begin
-    if (!rst_n) begin
+    if (!rst_n || flush_d) begin
       instr_d <= 32'h00000013;  // nop
       pc_d <= {32{1'bx}};
       pc_plus_4_d <= {32{1'bx}};
@@ -281,7 +295,7 @@ module pipelined_cpu (
 
   wire [1:0] pc_src_d;
   wire [2:0] branch_type_d;
-  wire [2:0] result_src_d;
+  wire [1:0] result_src_d;
   wire [3:0] mem_write_d;
   wire [2:0] data_ext_control_d;
   wire [3:0] alu_control_d;
@@ -332,7 +346,7 @@ module pipelined_cpu (
 
   // 3. Execute
   reg reg_write_e;
-  reg [2:0] result_src_e;
+  reg [1:0] result_src_e;
   reg [3:0] mem_write_e;
   reg [2:0] data_ext_control_e;
   reg [3:0] alu_control_e;
@@ -352,7 +366,7 @@ module pipelined_cpu (
   always @(posedge clk or negedge rst_n) begin
     if (!rst_n || flush_e) begin
       reg_write_e <= 0;
-      result_src_e <= 3'bxxx;
+      result_src_e <= `RESULT_SRC_ALU;
       mem_write_e <= 0;
       data_ext_control_e <= 4'b0000;
       alu_control_e <= 4'b0000;
@@ -390,7 +404,6 @@ module pipelined_cpu (
   end
 
   wire [31:0] pc_target_e = pc_e + imm_ext_e;
-  wire [31:0] write_data_e = rd2_e;
   wire [31:0] alu_result_e;
   wire alu_zero_e;
   wire alu_borrow_e;
@@ -408,23 +421,39 @@ module pipelined_cpu (
   );
 
   reg [31:0] alu_src_a_e;
-  reg [31:0] alu_src_b_e;
+  reg [31:0] write_data_e;
 
   always @(*) begin
     case (forward_a_e)
       `FORWARD_NONE:      alu_src_a_e = rd1_e;
       `FORWARD_WRITEBACK: alu_src_a_e = result_w;
-      `FORWARD_MEMORY:    alu_src_a_e = alu_result_m;
+      `FORWARD_MEMORY: begin
+        case (result_src_m)
+          `RESULT_SRC_ALU:       alu_src_a_e = alu_result_m;
+          `RESULT_SRC_PC_TARGET: alu_src_a_e = pc_target_m;
+          `RESULT_SRC_PC_STEP:   alu_src_a_e = pc_plus_4_m;
+          default:               alu_src_a_e = {32{1'bx}};
+        endcase
+      end
       default:            alu_src_a_e = {32{1'bx}};
     endcase
 
     case (forward_b_e)
-      `FORWARD_NONE:      alu_src_b_e = alu_src_e == `ALU_SRC_IMM ? imm_ext_e : rd2_e;
-      `FORWARD_WRITEBACK: alu_src_b_e = result_w;
-      `FORWARD_MEMORY:    alu_src_b_e = alu_result_m;
-      default:            alu_src_b_e = {32{1'bx}};
+      `FORWARD_NONE:      write_data_e = rd2_e;
+      `FORWARD_WRITEBACK: write_data_e = result_w;
+      `FORWARD_MEMORY: begin
+        case (result_src_m)
+          `RESULT_SRC_ALU:       write_data_e = alu_result_m;
+          `RESULT_SRC_PC_TARGET: write_data_e = pc_target_m;
+          `RESULT_SRC_PC_STEP:   write_data_e = pc_plus_4_m;
+          default:               write_data_e = {32{1'bx}};
+        endcase
+      end
+      default:            write_data_e = {32{1'bx}};
     endcase
   end
+
+  wire [31:0] alu_src_b_e = alu_src_e == `ALU_SRC_IMM ? imm_ext_e : write_data_e;
 
   cpu_alu alu (
       .src_a  (alu_src_a_e),
@@ -439,13 +468,14 @@ module pipelined_cpu (
 
   // 4. Memory
   reg reg_write_m;
-  reg [2:0] result_src_m;
+  reg [1:0] result_src_m;
   reg [3:0] mem_write_m;
   reg [2:0] data_ext_control_m;
 
   reg [31:0] alu_result_m;
   reg [31:0] write_data_m;
   reg [4:0] rd_m;
+  reg [31:0] pc_target_m;
   reg [31:0] pc_plus_4_m;
 
   always @(posedge clk or negedge rst_n) begin
@@ -458,7 +488,8 @@ module pipelined_cpu (
       alu_result_m <= 32'b0;
       write_data_m <= 32'b0;
       rd_m <= 5'b0;
-      pc_plus_4_m <= pc_plus_4_e;
+      pc_target_m <= {32{1'bx}};
+      pc_plus_4_m <= {32{1'bx}};
     end else begin
       reg_write_m <= reg_write_e;
       result_src_m <= result_src_e;
@@ -468,6 +499,7 @@ module pipelined_cpu (
       alu_result_m <= alu_result_e;
       write_data_m <= write_data_e;
       rd_m <= rd_e;
+      pc_target_m <= pc_target_e;
       pc_plus_4_m <= pc_plus_4_e;
     end
   end
@@ -486,11 +518,12 @@ module pipelined_cpu (
 
   // 5. Writeback
   reg reg_write_w;
-  reg [2:0] result_src_w;
+  reg [1:0] result_src_w;
 
   reg [31:0] alu_result_w;
   reg [31:0] read_data_w;
   reg [4:0] rd_w;
+  reg [31:0] pc_target_w;
   reg [31:0] pc_plus_4_w;
 
   always @(posedge clk or negedge rst_n) begin
@@ -501,6 +534,7 @@ module pipelined_cpu (
       alu_result_w <= 32'b0;
       read_data_w <= 32'b0;
       rd_w <= 5'b0;
+      pc_target_w <= {32{1'bx}};
       pc_plus_4_w <= {32{1'bx}};
     end else begin
       reg_write_w <= reg_write_m;
@@ -509,6 +543,7 @@ module pipelined_cpu (
       alu_result_w <= alu_result_m;
       read_data_w <= read_data_m;
       rd_w <= rd_m;
+      pc_target_w <= pc_target_m;
       pc_plus_4_w <= pc_plus_4_m;
     end
   end
@@ -519,10 +554,8 @@ module pipelined_cpu (
     case (result_src_w)
       `RESULT_SRC_ALU:       result_w = alu_result_w;
       `RESULT_SRC_DATA:      result_w = read_data_w;
-      // TODO: fix these (they aren't suffixed with _w)
-      `RESULT_SRC_IMM:       result_w = imm_ext_d;
-      `RESULT_SRC_PC_TARGET: result_w = pc_target_e;
-      `RESULT_SRC_PC_STEP:   result_w = pc_plus_4_f;
+      `RESULT_SRC_PC_TARGET: result_w = pc_target_w;
+      `RESULT_SRC_PC_STEP:   result_w = pc_plus_4_w;
       default:               result_w = {32{1'bx}};
     endcase
   end

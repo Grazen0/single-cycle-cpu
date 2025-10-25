@@ -8,4 +8,8 @@ _start:
     call    __libc_init_array
     call    start
 
+
     j       .
+
+.data
+hello: .asciz "Hello, world!"

@@ -1,4 +1,5 @@
 `default_nettype none
+`include "cpu_alu.vh"
 
 module cpu_alu (
     input wire [31:0] src_a,
@@ -25,24 +26,24 @@ module cpu_alu (
     lt       = 0;
 
     casez (control)
-      4'b0000: {carry, result} = {1'b0, src_a} + {1'b0, src_b};
-      4'b1000: begin
+      `ALU_ADD: {carry, result} = {1'b0, src_a} + {1'b0, src_b};
+      `ALU_SUB: begin
         {carry, result} = {1'b1, src_a} - {1'b0, src_b};
         borrow = ~carry;
         overflow = (src_a[31] != src_b[31]) && (result[31] != src_a[31]);
         lt = (result[31] ^ overflow);
       end
-      4'b0001: result = src_a << shamt;
-      4'b0010: result = {31'b0, src_a_signed < src_b_signed};
-      4'b0011: result = {31'b0, src_a < src_b};
-      4'b0100: result = src_a ^ src_b;
-      4'b0101: result = src_a >> shamt;
-      4'b1101: result = src_a_signed >>> shamt;
-      4'b0110: result = src_a | src_b;
-      4'b0111: result = src_a & src_b;
-      4'b1001: result = src_a;
-      4'b1010: result = src_b;
-      4'b1111: result = {32{1'bx}};
+      `ALU_SLL: result = src_a << shamt;
+      `ALU_SLT: result = {31'b0, src_a_signed < src_b_signed};
+      `ALU_SLTU: result = {31'b0, src_a < src_b};
+      `ALU_XOR: result = src_a ^ src_b;
+      `ALU_SRL: result = src_a >> shamt;
+      `ALU_SRA: result = src_a_signed >>> shamt;
+      `ALU_OR: result = src_a | src_b;
+      `ALU_AND: result = src_a & src_b;
+      `ALU_PASS_A: result = src_a;
+      `ALU_PASS_B: result = src_b;
+      `ALU_NOP: result = {32{1'bx}};
       default: result = {32{1'bx}};
     endcase
   end

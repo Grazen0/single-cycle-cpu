@@ -61,7 +61,10 @@ char *_sbrk(const int incr)
         heap_end = &__bss_end;
 
     if (heap_end + incr > stack_ptr) {
-        lcd_print("Heap and stack collision\n");
+        // Heap and stack collision, abort everything
+        lcd_send_instr(LCD_CLEAR);
+        lcd_print("HS collision");
+
         while (true) {
         }
     }
